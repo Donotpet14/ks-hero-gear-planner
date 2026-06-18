@@ -17,6 +17,7 @@
       --ks-yellow: #ffe66d;
       --ks-card-radius: 18px;
       --backpack-h: 0px;
+      interpolate-size: allow-keywords;
     }
 
     html, body { min-height: 100%; }
@@ -94,16 +95,9 @@
       gap: .5rem;
       flex: 0 0 auto;
     }
-    #backpackEditBtn {
-      width: auto;
-      margin: 0;
-      padding: .35rem .7rem;
-      font-size: .8rem;
+    .backpack-head-actions .pill {
+      font-size: .72rem;
       white-space: nowrap;
-    }
-    #backpackEditBtn.active {
-      background: linear-gradient(180deg, var(--ks-cyan), var(--ks-cyan-dark));
-      color: #fff;
     }
     .material-strip {
       display: flex;
@@ -133,9 +127,87 @@
     .mat-chip.ok { border-color: rgba(99,227,81,.42); background: rgba(99,227,81,.12); color: #d9ffdf; }
     .mat-chip.bad { border-color: rgba(231,92,97,.5); background: rgba(231,92,97,.14); color: #ffd8dc; }
     .mat-chip.unlimited { border-color: rgba(53,217,230,.45); background: rgba(53,217,230,.12); color: #d4faff; }
-    .backpack-section.open .material-strip { display: none; }
-    .backpack-section:not(.open) .material-grid { display: none; }
-    .backpack-section:not(.open) #resetGearsBtn { display: none; }
+
+    .bp-drawer {
+      height: 0;
+      overflow: hidden;
+      transition: height .42s cubic-bezier(.22, 1, .36, 1);
+      will-change: height;
+    }
+    .bp-drawer.dragging {
+      transition: none;
+    }
+    .bp-drawer-inner {
+      padding-top: .8rem;
+    }
+    .bp-handle {
+      width: 100%;
+      margin: 0;
+      padding: .55rem 0 .15rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: none;
+      border: none;
+      box-shadow: none;
+      cursor: grab;
+      touch-action: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .bp-handle:active { cursor: grabbing; }
+    .bp-handle:focus-visible {
+      outline: 2px solid var(--ks-cyan);
+      outline-offset: 2px;
+      border-radius: 999px;
+    }
+    .bp-handle-grip {
+      width: 44px;
+      height: 5px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.28);
+      transition: background .2s ease, width .2s ease;
+    }
+    .bp-handle:hover .bp-handle-grip { background: rgba(255,255,255,.42); }
+    .backpack-section.open .bp-handle-grip { width: 56px; background: rgba(53,217,230,.55); }
+
+    /* Desktop-only toggle for the material edit boxes (mobile uses the drag handle). */
+    .bp-edit-toggle { display: none; margin: 0; white-space: nowrap; }
+    .backpack-head-actions .bp-edit-toggle {
+      font-size: .72rem;
+      padding: .34rem .66rem;
+      border-radius: 999px;
+    }
+
+    /* Full-screen draggable sheet (mobile). The section lifts out of flow into a
+       fixed overlay so the drawer can grow over the page without pushing it. */
+    .backpack-section.floating {
+      position: fixed;
+      z-index: 60;
+      margin: 0;
+      box-shadow: 0 30px 90px rgba(0,0,0,.5);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.075), rgba(255,255,255,.038)),
+        rgba(11,16,32,.86);
+    }
+    .backpack-section.stuck {
+      border-top-left-radius: 0;
+      border-top-right-radius: 0;
+    }
+    .backpack-section.floating .bp-drawer {
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .backpack-section.floating .bp-drawer-inner {
+      display: flex;
+      flex-direction: column;
+      min-height: 100%;
+    }
+    .backpack-section.floating .bp-drawer-inner .status-row { margin-top: auto; }
+    html.bp-scroll-lock, body.bp-scroll-lock {
+      overflow: hidden;
+      touch-action: none;
+      overscroll-behavior: none;
+    }
     .material-card {
       display: grid;
       gap: .55rem;
@@ -213,6 +285,79 @@
     .pill.warn { color: #fff0cf; border-color: rgba(238,178,86,.5); background: rgba(238,178,86,.16); }
     .pill[hidden] { display: none; }
 
+    /* Frosted-glass buttons — overrides Pico's flat solid defaults so every
+       button matches the fluid glassy surfaces. */
+    button,
+    [type="button"], [type="submit"], [type="reset"], [role="button"] {
+      --pico-background-color: transparent;
+      --pico-border-color: var(--ks-border);
+      font-size: .78rem;
+      font-weight: 750;
+      letter-spacing: .01em;
+      padding: .5rem .85rem;
+      border-radius: 13px;
+      border: 1px solid var(--ks-border);
+      background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.04));
+      color: var(--ks-text);
+      box-shadow: 0 6px 16px rgba(0,0,0,.16), inset 0 1px 0 rgba(255,255,255,.12);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      transition: transform .14s ease, background .2s ease, border-color .2s ease, box-shadow .2s ease;
+    }
+    button:hover,
+    [type="button"]:hover, [type="submit"]:hover, [type="reset"]:hover, [role="button"]:hover {
+      background: linear-gradient(180deg, rgba(255,255,255,.17), rgba(255,255,255,.075));
+      border-color: rgba(255,255,255,.24);
+      transform: translateY(-1px);
+      box-shadow: 0 11px 24px rgba(0,0,0,.24), inset 0 1px 0 rgba(255,255,255,.16);
+    }
+    button:active,
+    [type="button"]:active, [type="submit"]:active, [type="reset"]:active, [role="button"]:active {
+      transform: translateY(0);
+      box-shadow: 0 4px 12px rgba(0,0,0,.2), inset 0 1px 0 rgba(255,255,255,.08);
+    }
+    button:focus-visible,
+    [type="button"]:focus-visible, [type="submit"]:focus-visible, [type="reset"]:focus-visible {
+      outline: 2px solid var(--ks-cyan);
+      outline-offset: 2px;
+    }
+    /* Quiet neutral variant. */
+    button.secondary {
+      background: linear-gradient(180deg, rgba(255,255,255,.075), rgba(255,255,255,.03));
+      border-color: var(--ks-border);
+      color: var(--ks-text);
+    }
+    button.secondary:hover {
+      background: linear-gradient(180deg, rgba(53,217,230,.16), rgba(53,217,230,.06));
+      border-color: rgba(53,217,230,.4);
+    }
+    /* Destructive / strong variant. */
+    button.contrast {
+      background: linear-gradient(180deg, rgba(231,92,97,.20), rgba(231,92,97,.085));
+      border-color: rgba(231,92,97,.4);
+      color: #ffe2e4;
+    }
+    button.contrast:hover {
+      background: linear-gradient(180deg, rgba(231,92,97,.30), rgba(231,92,97,.13));
+      border-color: rgba(231,92,97,.6);
+    }
+    button:disabled, button[aria-disabled="true"] { opacity: .5; transform: none; box-shadow: none; }
+
+    /* The backpack drag handle is a <button> but must stay a bare grip,
+       not pick up the glass-button surface/hover. */
+    .bp-handle,
+    .bp-handle:hover,
+    .bp-handle:active {
+      background: none;
+      border: none;
+      box-shadow: none;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      transform: none;
+      padding: .55rem 0 .15rem;
+      border-radius: 0;
+    }
+
     .toolbar {
       display: grid;
       gap: 1rem;
@@ -242,26 +387,74 @@
       display: grid; grid-template-columns: 2fr 1fr 1fr; gap: .55rem; margin-top: .1rem;
     }
     .config-actions button { margin: 0; }
-    .backup { margin-top: .9rem; border-top: 1px solid var(--ks-border); padding-top: .8rem; }
+
+    /* Backup & share expander — one cohesive card (summary + body). */
+    .backup { margin-top: 1rem; }
     .backup > summary {
-      cursor: pointer; list-style: none; font-weight: 700; font-size: .85rem;
-      color: var(--ks-muted); display: flex; align-items: center; gap: .4rem;
+      cursor: pointer; list-style: none;
+      display: flex; align-items: center; justify-content: space-between; gap: .5rem;
+      font-weight: 750; font-size: .74rem; letter-spacing: .02em;
+      color: var(--ks-text);
+      margin: 0;
+      padding: .62rem .8rem;
+      border: 1px solid var(--ks-border);
+      border-radius: 12px;
+      background: var(--ks-surface-2);
+      transition: background .2s ease, border-color .2s ease, border-radius .25s ease;
     }
     .backup > summary::-webkit-details-marker { display: none; }
-    .backup > summary::before { content: '▸'; transition: transform .15s ease; }
-    .backup[open] > summary::before { transform: rotate(90deg); }
-    .manual-io { margin-top: .7rem; }
-    .manual-io > summary {
-      cursor: pointer; list-style: none; font-weight: 700; font-size: .78rem;
-      color: var(--ks-muted); display: flex; align-items: center; gap: .4rem;
+    .backup > summary::marker { content: ''; }
+    /* Keep our title color across all states (beats Pico's accordion color rules). */
+    details.backup > summary:not([role]),
+    details.backup[open] > summary:not([role]),
+    details.backup > summary:not([role]):hover,
+    details.backup > summary:not([role]):focus { color: var(--ks-text); }
+    .backup > summary:hover { border-color: rgba(53,217,230,.42); }
+    .backup > summary:hover::after { border-color: var(--ks-cyan); }
+    .backup > summary::after {
+      content: '';
+      flex: none;
+      width: .45rem; height: .45rem;
+      background: none;
+      background-image: none;
+      border-right: 2px solid var(--ks-muted);
+      border-bottom: 2px solid var(--ks-muted);
+      border-radius: 1px;
+      transform: rotate(45deg);
+      transition: transform .25s ease, border-color .2s ease;
     }
-    .manual-io > summary::-webkit-details-marker { display: none; }
-    .manual-io > summary::before { content: '▸'; transition: transform .15s ease; }
-    .manual-io[open] > summary::before { transform: rotate(90deg); }
-    .backup-actions { display: grid; grid-template-columns: 1fr 1fr; gap: .55rem; margin-top: .7rem; }
-    .backup-actions button { margin: 0; }
-    .json-area { display: none; gap: .55rem; margin-top: .7rem; }
+    .backup[open] > summary {
+      border-radius: 12px 12px 0 0;
+      border-bottom-color: transparent;
+      margin-bottom: 0;
+    }
+    .backup[open] > summary::after {
+      border-color: var(--ks-cyan);
+      transform: rotate(-135deg);
+    }
+
+    .backup-body {
+      border: 1px solid var(--ks-border);
+      border-top: none;
+      border-radius: 0 0 12px 12px;
+      padding: .75rem;
+      display: grid; gap: .6rem;
+      background: var(--ks-surface-2);
+    }
+    .backup-actions { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; margin: 0; }
+    .backup-actions button { margin: 0; width: 100%; }
+    .json-area { display: none; gap: .5rem; margin: 0; }
     .json-area.show { display: grid; }
+    .json-area button { margin: 0; }
+
+    /* Fluid open/close (modern browsers; snaps gracefully elsewhere). */
+    .backup::details-content {
+      height: 0;
+      overflow: hidden;
+      transition: height .28s cubic-bezier(.22, 1, .36, 1), content-visibility .28s allow-discrete;
+    }
+    .backup[open]::details-content { height: auto; }
+
     textarea { min-height: 120px; resize: vertical; }
 
     .troop-tabs {
@@ -282,6 +475,7 @@
       border: 1px solid var(--ks-border);
       color: var(--ks-text);
       font-weight: 750;
+      font-size: .82rem;
       text-align: center;
       transition: .18s ease;
     }
@@ -450,6 +644,8 @@
 
     .level-controls {
       min-width: 0;
+      display: grid;
+      gap: .5rem;
     }
     .level-row {
       padding: .5rem;
@@ -476,7 +672,12 @@
       background: rgba(238,178,86,.08);
     }
     .level-row.current .step-btn {
-      background: linear-gradient(180deg, var(--ks-orange), var(--ks-orange-dark));
+      border-color: rgba(238,178,86,.45);
+      background: linear-gradient(180deg, rgba(238,178,86,.34), rgba(181,103,12,.20));
+    }
+    .level-row.current .step-btn:hover:not(:disabled) {
+      background: linear-gradient(180deg, rgba(238,178,86,.5), rgba(181,103,12,.3));
+      border-color: rgba(238,178,86,.72);
     }
     /* Edit-current mode: focus on real gear only — hide the target steppers. */
     body.editing-current .level-row.target {
@@ -541,14 +742,24 @@
       width: 34px;
       padding: 0;
       margin: 0;
-      border: 0;
-      border-radius: 20px;
-      color: #fff;
-      background: linear-gradient(180deg, var(--ks-cyan), var(--ks-cyan-dark));
+      border: 1px solid rgba(53,217,230,.42);
+      border-radius: 999px;
+      color: #eafdff;
+      background: linear-gradient(180deg, rgba(53,217,230,.34), rgba(9,167,182,.20));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.25), 0 4px 10px rgba(0,0,0,.18);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
       font-size: 1.1rem;
       font-weight: 900;
       line-height: 1;
+      transition: background .18s ease, border-color .18s ease, transform .12s ease, box-shadow .18s ease;
     }
+    .step-btn:hover:not(:disabled) {
+      background: linear-gradient(180deg, rgba(53,217,230,.5), rgba(9,167,182,.3));
+      border-color: rgba(53,217,230,.7);
+      transform: translateY(-1px);
+    }
+    .step-btn:active:not(:disabled) { transform: translateY(0); }
     .step-btn:disabled {
       opacity: .35;
       filter: saturate(.25);
@@ -768,6 +979,18 @@
 
     @media (min-width: 720px) {
       .material-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      /* Fluid slide for the edit-materials toggle (grid-rows technique). */
+      .bp-drawer {
+        height: auto !important;
+        display: grid;
+        grid-template-rows: 0fr;
+        overflow: hidden;
+        transition: grid-template-rows .32s cubic-bezier(.22, 1, .36, 1);
+      }
+      .bp-drawer > .bp-drawer-inner { min-height: 0; overflow: hidden; }
+      .backpack-section.open .bp-drawer { grid-template-rows: 1fr; }
+      .bp-handle { display: none; }
+      .bp-edit-toggle { display: inline-flex; }
       .toolbar { grid-template-columns: 1fr 1.15fr; }
       .troop-tabs { display: none; }
       .troop-wrap {

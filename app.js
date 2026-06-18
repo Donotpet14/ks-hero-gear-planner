@@ -561,17 +561,256 @@ function onEditCurrentToggle(){
   render();
 }
 
+/* ---- Backpack drawer: draggable full-screen bottom-sheet (mobile) ---- */
+const isDesktop = () => window.matchMedia('(min-width: 720px)').matches;
+const BP_BOTTOM_GAP = 12;   // px gap left below the open sheet
+let bpFloating = false;     // section lifted into a fixed overlay
+let bpDragging = false;     // finger currently down on the handle
+let bpSpacer = null;        // flow placeholder while floating
+let bpBaseHeight = 0;       // closed section height (header + pills + handle)
+let bpFloatTop = 0, bpFloatLeft = 0, bpFloatWidth = 0;
+let bpOpenHeight = 0;       // target drawer height when fully open
+let bpAnimating = false;    // open/close transition in progress
+let bpAnimTimer = 0;        // fallback timer to settle the animation
+
+function bpEls(){
+  return {
+    section: document.getElementById('backpackSection'),
+    drawer: document.getElementById('backpackDrawer'),
+    handle: document.getElementById('backpackHandle'),
+  };
+}
+
 function updateBackpackBtn(){
-  const btn = document.getElementById('backpackEditBtn');
-  if(!btn) return;
-  btn.textContent = backpackOpen ? '✓ Done' : '✏️ Edit backpack';
-  btn.classList.toggle('active', backpackOpen);
-  document.getElementById('backpackSection').classList.toggle('open', backpackOpen);
+  const {section, handle} = bpEls();
+  if(section) section.classList.toggle('open', backpackOpen);
+  if(handle){
+    handle.setAttribute('aria-expanded', backpackOpen ? 'true' : 'false');
+    handle.setAttribute('aria-label', backpackOpen ? 'Collapse backpack editor' : 'Expand backpack editor');
+  }
+  const editBtn = document.getElementById('backpackEditBtn');
+  if(editBtn){
+    editBtn.setAttribute('aria-expanded', backpackOpen ? 'true' : 'false');
+    editBtn.textContent = backpackOpen ? '✕ Hide materials' : '✏️ Edit materials';
+  }
+  syncDrawerHeight();
+}
+
+function setScrollLock(on){
+  document.documentElement.classList.toggle('bp-scroll-lock', on);
+  document.body.classList.toggle('bp-scroll-lock', on);
+}
+
+function setStuck(stuck){
+  const {section} = bpEls();
+  if(section) section.classList.toggle('stuck', stuck);
+}
+
+// Lift the section out of flow into a fixed overlay anchored exactly where it
+// currently sits, leaving a placeholder so the page below never moves.
+function floatSection(){
+  const {section} = bpEls();
+  if(!section || bpFloating) return;
+  const rect = section.getBoundingClientRect();
+  bpBaseHeight = rect.height;          // drawer is collapsed here, so this is the closed height
+  bpFloatTop = rect.top;
+  bpFloatLeft = rect.left;
+  bpFloatWidth = rect.width;
+
+  const cs = getComputedStyle(section);
+  bpSpacer = document.createElement('div');
+  bpSpacer.setAttribute('aria-hidden', 'true');
+  bpSpacer.style.height = rect.height + 'px';
+  bpSpacer.style.marginTop = cs.marginTop;
+  bpSpacer.style.marginBottom = cs.marginBottom;
+  section.parentNode.insertBefore(bpSpacer, section);
+
+  section.classList.add('floating');
+  section.style.top = bpFloatTop + 'px';
+  section.style.left = bpFloatLeft + 'px';
+  section.style.width = bpFloatWidth + 'px';
+  setStuck(bpFloatTop <= 0.5);
+  setScrollLock(true);
+  bpFloating = true;
+}
+
+function unfloatSection(){
+  const {section} = bpEls();
+  if(!section || !bpFloating) return;
+  section.classList.remove('floating');
+  section.style.top = section.style.left = section.style.width = '';
+  if(bpSpacer){ bpSpacer.remove(); bpSpacer = null; }
+  setScrollLock(false);
+  bpFloating = false;
+  setStuck(section.getBoundingClientRect().top <= 0.5);
+}
+
+// Drawer height that makes the sheet fill the screen down to the bottom gap.
+function computeOpenHeight(){
+  return Math.max(0, window.innerHeight - BP_BOTTOM_GAP - bpFloatTop - bpBaseHeight);
+}
+
+function syncDrawerHeight(){
+  const {drawer} = bpEls();
+  if(!drawer) return;
+  if(isDesktop()){ drawer.style.height = ''; return; }
+  if(bpDragging || bpAnimating) return;
+  drawer.classList.remove('dragging');
+  if(backpackOpen){
+    if(!bpFloating) floatSection();
+    bpOpenHeight = computeOpenHeight();
+    drawer.style.height = bpOpenHeight + 'px';
+  } else {
+    drawer.style.height = '0px';
+    if(bpFloating) unfloatSection();
+  }
+}
+
+function animateDrawerTo(open){
+  const {drawer} = bpEls();
+  if(!drawer) return;
+  if(open && !bpFloating) floatSection();
+  bpOpenHeight = computeOpenHeight();
+  const start = parseFloat(drawer.style.height) || 0;
+  const target = open ? bpOpenHeight : 0;
+  // Establish an explicit starting height so the transition can run.
+  drawer.style.height = start + 'px';
+  drawer.classList.remove('dragging');
+  void drawer.offsetHeight;                 // force reflow
+  backpackOpen = open;
+  bpAnimating = (start !== target);
+  drawer.style.height = target + 'px';
+  updateBackpackBtn();
+  clearTimeout(bpAnimTimer);
+  if(!bpAnimating){
+    if(!open) unfloatSection();
+  } else {
+    bpAnimTimer = setTimeout(()=>{
+      bpAnimating = false;
+      if(!backpackOpen && !bpDragging) unfloatSection();
+    }, 520);
+  }
+}
+
+function setBackpackOpen(open){
+  if(isDesktop()){ backpackOpen = open; updateBackpackBtn(); return; }
+  animateDrawerTo(open);
+}
+
+function initBackpackDrawer(){
+  const {handle, drawer, section} = bpEls();
+  if(!handle || !drawer || !section) return;
+
+  let startY = 0, startHeight = 0;
+  let lastY = 0, lastT = 0, velocity = 0, moved = 0, downT = 0;
+  const TAP_MOVE = 8;       // px of movement still counts as a tap
+  const TAP_TIME = 250;     // ms under which a small move is a tap
+  const FLICK_VEL = 0.5;    // px/ms flick threshold
+
+  function onMove(e){
+    if(!bpDragging) return;
+    const y = e.clientY;
+    const now = e.timeStamp || performance.now();
+    const dt = now - lastT;
+    if(dt > 0) velocity = (y - lastY) / dt;
+    lastY = y; lastT = now;
+    const dy = y - startY;
+    moved = Math.max(moved, Math.abs(dy));
+    let h = startHeight + dy;
+    if(h < 0) h = 0;
+    if(h > bpOpenHeight) h = bpOpenHeight;
+    drawer.style.height = h + 'px';
+    e.preventDefault();
+  }
+
+  function onUp(e){
+    if(!bpDragging) return;
+    bpDragging = false;
+    drawer.classList.remove('dragging');
+    handle.releasePointerCapture?.(e.pointerId);
+    document.removeEventListener('pointermove', onMove);
+    document.removeEventListener('pointerup', onUp);
+    document.removeEventListener('pointercancel', onUp);
+
+    const elapsed = (e.timeStamp || performance.now()) - downT;
+    const isTap = moved < TAP_MOVE && elapsed < TAP_TIME;
+    if(isTap){ animateDrawerTo(!backpackOpen); return; }
+
+    const h = parseFloat(drawer.style.height) || 0;
+    let open;
+    if(Math.abs(velocity) > FLICK_VEL) open = velocity > 0;  // flick down opens, up closes
+    else open = h > bpOpenHeight / 2;                        // otherwise nearest
+    animateDrawerTo(open);
+  }
+
+  handle.addEventListener('pointerdown', (e)=>{
+    if(isDesktop()) return;
+    clearTimeout(bpAnimTimer);
+    bpAnimating = false;
+    if(!bpFloating) floatSection();
+    bpOpenHeight = computeOpenHeight();
+    bpDragging = true;
+    moved = 0;
+    startY = lastY = e.clientY;
+    downT = lastT = e.timeStamp || performance.now();
+    velocity = 0;
+    startHeight = backpackOpen ? bpOpenHeight : 0;
+    drawer.classList.add('dragging');
+    drawer.style.height = startHeight + 'px';
+    handle.setPointerCapture?.(e.pointerId);
+    document.addEventListener('pointermove', onMove, {passive:false});
+    document.addEventListener('pointerup', onUp);
+    document.addEventListener('pointercancel', onUp);
+    e.preventDefault();
+  });
+
+  // Keyboard activation (Enter / Space).
+  handle.addEventListener('keydown', (e)=>{
+    if(e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar'){
+      e.preventDefault();
+      setBackpackOpen(!backpackOpen);
+    }
+  });
+
+  // Desktop toggle button for the material edit boxes.
+  const editBtn = document.getElementById('backpackEditBtn');
+  if(editBtn) editBtn.addEventListener('click', ()=> setBackpackOpen(!backpackOpen));
+
+  // Once a close finishes, drop back into normal flow.
+  drawer.addEventListener('transitionend', (e)=>{
+    if(e.propertyName !== 'height' || isDesktop()) return;
+    clearTimeout(bpAnimTimer);
+    bpAnimating = false;
+    if(!backpackOpen && !bpDragging) unfloatSection();
+  });
+
+  // Square the top corners once the section is pinned to the top edge.
+  const onScroll = ()=>{ if(!bpFloating) setStuck(section.getBoundingClientRect().top <= 0.5); };
+  window.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+
+  window.addEventListener('resize', ()=>{
+    if(isDesktop()){
+      if(bpFloating) unfloatSection();
+      updateBackpackBtn();
+      return;
+    }
+    if(bpFloating && bpSpacer){
+      const r = bpSpacer.getBoundingClientRect();
+      bpFloatTop = r.top; bpFloatLeft = r.left; bpFloatWidth = r.width;
+      section.style.top = bpFloatTop + 'px';
+      section.style.left = bpFloatLeft + 'px';
+      section.style.width = bpFloatWidth + 'px';
+      setStuck(bpFloatTop <= 0.5);
+    }
+    syncDrawerHeight();
+  });
+
+  syncDrawerHeight();
 }
 
 function onBackpackToggle(){
-  backpackOpen = !backpackOpen;
-  updateBackpackBtn();
+  setBackpackOpen(!backpackOpen);
 }
 
 function breakdownHtml(title,c){
@@ -596,7 +835,6 @@ function renderOverview(){
 }
 
 document.getElementById('editCurrentBtn').addEventListener('click', onEditCurrentToggle);
-document.getElementById('backpackEditBtn').addEventListener('click', onBackpackToggle);
 document.getElementById('resetTargetsBtn').addEventListener('click',()=>{
   for(const t of troops) for(const s of slots){
     const g=state.gear[t.key][s.key];
@@ -652,12 +890,15 @@ document.getElementById('saveSlotBtn').addEventListener('click',()=>{
   updateConfigHeader();
   flash(`Saved “${configName(id)}”`);
 });
-document.getElementById('loadSlotBtn').addEventListener('click',()=>{
+document.getElementById('loadSlotBtn').addEventListener('click', revertToSaved);
+function revertToSaved(){
   if(!activeConfigId){flash('No saved configuration is active', true); return;}
   if(!isDirty()){flash('No unsaved changes to revert'); return;}
   if(!confirm('Revert to the last saved version? Unsaved changes will be lost.')) return;
   if(applyConfig(activeConfigId)) flash(`Reverted “${configName(activeConfigId)}”`);
-});
+}
+const revertSavedBtn = document.getElementById('revertSavedBtn');
+if(revertSavedBtn) revertSavedBtn.addEventListener('click', revertToSaved);
 document.getElementById('deleteSlotBtn').addEventListener('click',()=>{
   const id=document.getElementById('slotSelect').value;
   if(id==='__new__'){flash('Select a saved configuration first', true); return;}
@@ -873,6 +1114,7 @@ if(activeConfigId && loadConfigIndex().some(c=>c.id===activeConfigId)){
 }
 renderSlotOptions();
 render();
+initBackpackDrawer();
 
 // Keep the troop tab bar pinned just below the sticky backpack. The backpack's
 // height changes (e.g. toggling "Edit backpack" swaps the material strip for the
@@ -880,7 +1122,7 @@ render();
 function setupStickyTabs(){
   const backpack=document.getElementById('backpackSection');
   if(!backpack || typeof ResizeObserver==='undefined') return;
-  const sync=()=>document.documentElement.style.setProperty('--backpack-h', backpack.offsetHeight+'px');
+  const sync=()=>document.documentElement.style.setProperty('--backpack-h', (bpFloating ? bpBaseHeight : backpack.offsetHeight)+'px');
   new ResizeObserver(sync).observe(backpack);
   sync();
 }
