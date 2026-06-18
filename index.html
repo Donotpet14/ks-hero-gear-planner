@@ -2,7 +2,7 @@
 <html lang="en" data-theme="dark">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
   <title>Kingshot Hero Gear Planner</title>
 
   <!-- Free design system: Pico.css. Custom CSS in styles.css is only for the game-style gear tiles. -->
@@ -21,7 +21,7 @@
     <div class="section-head">
       <div>
         <h2 id="backpackTitle">Backpack</h2>
-        <small>Enter 0 to treat a material as unlimited. Total plan cost is still shown.</small>
+        <small>Enter 0 to treat a material as unlimited.</small>
       </div>
       <div class="backpack-head-actions">
         <span id="dirtyPill" class="pill warn" hidden>● Unsaved changes</span>
@@ -32,7 +32,6 @@
     <div id="resourceGrid" class="material-grid"></div>
     <div class="status-row">
       <span id="overallStatus" class="pill ok">✅ Enough</span>
-      <span id="totalCostPill" class="pill info">Plan cost: 0</span>
       <button id="editCurrentBtn" class="secondary" title="Unlock the Current steppers on every card so you can correct your real gear. Off by default so planning targets stays safe.">🔒 Edit current</button>
       <button id="resetTargetsBtn" class="secondary">Reset targets</button>
       <button id="resetGearsBtn" class="contrast">Reset all gears</button>
@@ -80,13 +79,20 @@
         <details class="backup">
           <summary>Backup &amp; share</summary>
           <div class="backup-actions">
-            <button id="exportBtn" class="secondary">⬆️ Export</button>
-            <button id="showImportBtn" class="secondary">⬇️ Import</button>
+            <button id="copyClipBtn" class="secondary">📋 Copy to clipboard</button>
+            <button id="pasteClipBtn" class="secondary">📥 Paste from clipboard</button>
           </div>
-          <div id="jsonArea" class="json-area">
-            <textarea id="jsonText" spellcheck="false" placeholder="Exported setup appears here, or paste a setup to import."></textarea>
-            <button id="importBtn">Import pasted setup</button>
-          </div>
+          <details class="manual-io">
+            <summary>Manual (JSON text)</summary>
+            <div class="backup-actions">
+              <button id="exportBtn" class="secondary">⬆️ Show JSON</button>
+              <button id="showImportBtn" class="secondary">⬇️ Paste box</button>
+            </div>
+            <div id="jsonArea" class="json-area">
+              <textarea id="jsonText" spellcheck="false" placeholder="Exported setup appears here, or paste a setup to import."></textarea>
+              <button id="importBtn">Import pasted setup</button>
+            </div>
+          </details>
         </details>
       </div>
     </article>

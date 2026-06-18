@@ -60,23 +60,17 @@ function stageClass(stage) {
   return 'imbue-base';
 }
 function defaultGear(){
-  const seed = {
-    archer:{helmet:[79,18],gloves:[39,12],chest:[39,11],boots:[79,17]},
-    infantry:{helmet:[79,14],gloves:[39,12],chest:[59,14],boots:[59,13]},
-    cavalry:{helmet:[59,13],gloves:[19,11],chest:[39,12],boots:[59,13]},
-  };
   const gear = {};
   for(const t of troops){
     gear[t.key]={};
     for(const s of slots){
-      const [exp, forge] = seed[t.key][s.key];
-      gear[t.key][s.key] = {currentExp:exp,currentForge:forge,targetExp:exp,targetForge:forge};
+      gear[t.key][s.key] = {currentExp:1,currentForge:10,targetExp:1,targetForge:10};
     }
   }
   return gear;
 }
 const defaultState = () => ({
-  backpack:{mythic:84,mithril:187,exp:1319940,hammers:2687},
+  backpack:{mythic:0,mithril:0,exp:0,hammers:0},
   activeTroop:'archer',
   gear:defaultGear(),
   version:4,
@@ -413,8 +407,6 @@ function refreshResourceStatuses(cost=totalCost()){
   const ok = planEnough(cost);
   document.getElementById('overallStatus').className = 'pill ' + (ok ? 'ok' : 'bad');
   document.getElementById('overallStatus').textContent = ok ? '✅ Enough materials' : '⚠️ Missing materials';
-  const costParts = resources.filter(r=>cost[r.key]>0).map(r=>`${shortRes(r.key)} ${fmt.format(cost[r.key])}`).join(' · ') || '0';
-  document.getElementById('totalCostPill').textContent = 'Plan cost: ' + costParts;
 }
 
 function renderTabs(){
@@ -682,11 +674,63 @@ document.getElementById('deleteSlotBtn').addEventListener('click',()=>{
   updateConfigHeader();
   flash(`Deleted “${name}”`);
 });
-document.getElementById('exportBtn').addEventListener('click',()=>{
+function buildExportPayload(){
+  return {...state, configName: activeConfigId ? configName(activeConfigId) : (document.getElementById('slotName').value.trim() || undefined)};
+}
+// Shared import routine for the manual textarea and the clipboard paste button.
+// After loading, preselect the matching saved slot (by name) so Save overwrites it,
+// otherwise fall back to "➕ New configuration".
+function importFromText(text){
+  let parsed;
+  try{ parsed=JSON.parse(text); }
+  catch(e){ flash('Import failed: invalid JSON', true); return false; }
+  state=normalizeState(parsed);
+  activeConfigId=null; savedSnapshot=null;
+  localStorage.removeItem('ksGearPlanner.activeConfig');
+  const name = (parsed && typeof parsed.configName==='string') ? parsed.configName : '';
+  document.getElementById('slotName').value = name;
+  renderSlotOptions();
+  const sel=document.getElementById('slotSelect');
+  if(sel){
+    const match = name ? loadConfigIndex().find(c=>c.name.trim().toLowerCase()===name.trim().toLowerCase()) : null;
+    sel.value = match ? match.id : '__new__';
+  }
+  render();
+  flash('Imported setup — Save to keep it');
+  return true;
+}
+function revealManualIO(){
   document.querySelector('.backup').open=true;
+  const manual=document.querySelector('.manual-io'); if(manual) manual.open=true;
   document.getElementById('jsonArea').classList.add('show');
-  const payload={...state, configName: activeConfigId ? configName(activeConfigId) : (document.getElementById('slotName').value.trim() || undefined)};
-  document.getElementById('jsonText').value=JSON.stringify(payload,null,2);
+}
+document.getElementById('copyClipBtn').addEventListener('click',async()=>{
+  const text=JSON.stringify(buildExportPayload(),null,2);
+  try{
+    await navigator.clipboard.writeText(text);
+    flash('Copied setup to clipboard');
+  }catch(e){
+    revealManualIO();
+    document.getElementById('jsonText').value=text;
+    document.getElementById('jsonText').select();
+    flash('Clipboard blocked — copy from the box', true);
+  }
+});
+document.getElementById('pasteClipBtn').addEventListener('click',async()=>{
+  let text;
+  try{ text=await navigator.clipboard.readText(); }
+  catch(e){
+    revealManualIO();
+    document.getElementById('jsonText').value='';
+    document.getElementById('jsonText').focus();
+    flash('Clipboard blocked — paste into the box', true);
+    return;
+  }
+  importFromText(text);
+});
+document.getElementById('exportBtn').addEventListener('click',()=>{
+  revealManualIO();
+  document.getElementById('jsonText').value=JSON.stringify(buildExportPayload(),null,2);
   document.getElementById('jsonText').select();
 });
 document.getElementById('showImportBtn').addEventListener('click',()=>{
@@ -695,17 +739,7 @@ document.getElementById('showImportBtn').addEventListener('click',()=>{
   document.getElementById('jsonText').value='';
 });
 document.getElementById('importBtn').addEventListener('click',()=>{
-  try{
-    const parsed=JSON.parse(document.getElementById('jsonText').value);
-    state=normalizeState(parsed);
-    activeConfigId=null; savedSnapshot=null;
-    localStorage.removeItem('ksGearPlanner.activeConfig');
-    if(parsed && typeof parsed.configName==='string') document.getElementById('slotName').value=parsed.configName;
-    renderSlotOptions();
-    render();
-    flash('Imported setup — Save to keep it');
-  }
-  catch(e){flash('Import failed: invalid JSON', true);}
+  importFromText(document.getElementById('jsonText').value);
 });
 function flash(text,bad=false){
   const el=document.getElementById('overallStatus');

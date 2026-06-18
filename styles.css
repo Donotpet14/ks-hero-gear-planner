@@ -33,6 +33,8 @@
     body > main.container {
       max-width: 1180px;
       padding-block: 1.2rem 3rem;
+      padding-inline: 1rem;
+      margin-inline: auto;
     }
 
     h1 { font-size: 1.5rem; }
@@ -248,6 +250,14 @@
     .backup > summary::-webkit-details-marker { display: none; }
     .backup > summary::before { content: '▸'; transition: transform .15s ease; }
     .backup[open] > summary::before { transform: rotate(90deg); }
+    .manual-io { margin-top: .7rem; }
+    .manual-io > summary {
+      cursor: pointer; list-style: none; font-weight: 700; font-size: .78rem;
+      color: var(--ks-muted); display: flex; align-items: center; gap: .4rem;
+    }
+    .manual-io > summary::-webkit-details-marker { display: none; }
+    .manual-io > summary::before { content: '▸'; transition: transform .15s ease; }
+    .manual-io[open] > summary::before { transform: rotate(90deg); }
     .backup-actions { display: grid; grid-template-columns: 1fr 1fr; gap: .55rem; margin-top: .7rem; }
     .backup-actions button { margin: 0; }
     .json-area { display: none; gap: .55rem; margin-top: .7rem; }
