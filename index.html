@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Kingshot Hero Gear Planner</title>
+
+  <!-- Free design system: Pico.css. Custom CSS in styles.css is only for the game-style gear tiles. -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+<main class="container">
+  <article class="hero">
+    <h1>Kingshot Gear Planner</h1>
+    <p>Red gear planning with current → target previews, backpack cost checks, local save slots, and suggestion presets.</p>
+  </article>
+
+  <article id="backpackSection" class="backpack-section">
+    <div class="section-head">
+      <div>
+        <h2 id="backpackTitle">Backpack</h2>
+        <small>Enter 0 to treat a material as unlimited. Total plan cost is still shown.</small>
+      </div>
+      <div class="backpack-head-actions">
+        <span id="dirtyPill" class="pill warn" hidden>● Unsaved changes</span>
+        <button id="backpackEditBtn" type="button" class="secondary">✏️ Edit backpack</button>
+      </div>
+    </div>
+    <div id="resourceStrip" class="material-strip"></div>
+    <div id="resourceGrid" class="material-grid"></div>
+    <div class="status-row">
+      <span id="overallStatus" class="pill ok">✅ Enough</span>
+      <span id="totalCostPill" class="pill info">Plan cost: 0</span>
+      <button id="editCurrentBtn" class="secondary" title="Unlock the Current steppers on every card so you can correct your real gear. Off by default so planning targets stays safe.">🔒 Edit current</button>
+      <button id="resetTargetsBtn" class="secondary">Reset targets</button>
+      <button id="resetGearsBtn" class="contrast">Reset all gears</button>
+    </div>
+  </article>
+
+  <div class="toolbar">
+    <article>
+      <div class="section-head">
+        <div>
+          <h2>Suggest upgrades</h2>
+          <small>Preview first, then apply.</small>
+        </div>
+      </div>
+      <div class="preset-list">
+        <button data-suggest="balanced"><strong>⚖️ Balanced</strong><small>Even spread across all troops</small></button>
+        <button data-suggest="attack"><strong>⚔️ Attack</strong><small>Maximize offensive power</small></button>
+        <button data-suggest="defense"><strong>🛡️ Defense</strong><small>Maximize survivability</small></button>
+        <button data-suggest="bear"><strong>🐻 Bear</strong><small>Tuned for bear hunt events</small></button>
+        <button data-suggest="castle"><strong>🏰 Castle</strong><small>Tuned for castle battles</small></button>
+      </div>
+    </article>
+
+    <article>
+      <div class="section-head">
+        <div>
+          <h2>Save slots</h2>
+          <small>Named configurations stored in this browser via localStorage.</small>
+        </div>
+      </div>
+      <div class="config-manager">
+        <div class="config-field">
+          <label for="slotSelect">Configuration</label>
+          <select id="slotSelect" aria-label="Saved configuration"></select>
+        </div>
+        <div class="config-field">
+          <label for="slotName">Name</label>
+          <input id="slotName" type="text" placeholder="Configuration name" aria-label="Configuration name">
+        </div>
+        <div class="config-actions">
+          <button id="saveSlotBtn">💾 Save</button>
+          <button id="loadSlotBtn" class="secondary">↺ Revert</button>
+          <button id="deleteSlotBtn" class="contrast">🗑 Delete</button>
+        </div>
+        <details class="backup">
+          <summary>Backup &amp; share</summary>
+          <div class="backup-actions">
+            <button id="exportBtn" class="secondary">⬆️ Export</button>
+            <button id="showImportBtn" class="secondary">⬇️ Import</button>
+          </div>
+          <div id="jsonArea" class="json-area">
+            <textarea id="jsonText" spellcheck="false" placeholder="Exported setup appears here, or paste a setup to import."></textarea>
+            <button id="importBtn">Import pasted setup</button>
+          </div>
+        </details>
+      </div>
+    </article>
+  </div>
+
+  <div id="tabs" class="troop-tabs"></div>
+  <section id="troopWrap" class="troop-wrap"></section>
+
+  <article style="margin-top:1rem">
+    <div class="section-head">
+      <div>
+        <h2>Plan overview</h2>
+        <small id="overviewCount">No planned changes</small>
+      </div>
+    </div>
+    <div id="overviewBody" class="overview-grid"></div>
+  </article>
+</main>
+
+<div id="suggestModal" class="modal" role="dialog" aria-modal="true">
+  <article class="modal-card">
+    <div class="section-head">
+      <div>
+        <h2 id="suggestTitle">Suggested final setup</h2>
+        <small>Review the proposed changes before applying.</small>
+      </div>
+      <button id="closeSuggestBtn" class="secondary">Close</button>
+    </div>
+    <div id="suggestResourceStatus" class="status-row" style="margin-top:0;margin-bottom:.8rem"></div>
+    <div id="suggestSummary" class="overview-grid"></div>
+    <footer style="display:flex; gap:.6rem; flex-wrap:wrap; margin-top:1rem">
+      <button id="applySuggestBtn">Apply suggestion</button>
+      <button id="cancelSuggestBtn" class="secondary">Cancel</button>
+    </footer>
+  </article>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
