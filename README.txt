@@ -1,1 +1,0 @@
-Kingshot Hero Gear Planner

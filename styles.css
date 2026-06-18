@@ -71,6 +71,15 @@
     .hero h1 { margin-bottom: .35rem; letter-spacing: -.04em; }
     .hero p { margin: 0; color: var(--ks-muted); max-width: 720px; }
 
+    .site-footer {
+      margin-top: 2rem;
+      padding-top: 1.2rem;
+      border-top: 1px solid var(--ks-border);
+      text-align: center;
+      color: var(--ks-muted);
+      font-size: .9rem;
+    }
+
     .muted { color: var(--ks-muted); }
 
     .section-head {
