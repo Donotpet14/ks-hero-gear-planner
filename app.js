@@ -117,6 +117,9 @@ function loadActive(){try{return normalizeState(JSON.parse(localStorage.getItem(
 /* ---- Named configurations ---- */
 let activeConfigId = localStorage.getItem('ksGearPlanner.activeConfig') || null;
 let savedSnapshot = null;
+let pendingNewConfig = false;   // true while building an unnamed, not-yet-saved config
+let prevActiveConfigId = null;  // slot to fall back to if a new config is cancelled
+let importedName = '';          // name carried in from an import, prefilled on first save
 
 function fingerprint(st=state){return JSON.stringify({backpack:st.backpack, gear:st.gear});}
 function isDirty(){return !!(activeConfigId && savedSnapshot !== null && fingerprint() !== savedSnapshot);}
@@ -150,26 +153,48 @@ function renderSlotOptions(){
   if(!sel) return;
   const prev=sel.value;
   sel.textContent='';
-  const newOpt=document.createElement('option');
-  newOpt.value='__new__';
-  newOpt.textContent='➕ New configuration';
-  sel.appendChild(newOpt);
+  if(pendingNewConfig){
+    const opt=document.createElement('option');
+    opt.value='__pending__';
+    opt.textContent='✳️ Unsaved new configuration';
+    sel.appendChild(opt);
+  }
   for(const c of loadConfigIndex()){
     const opt=document.createElement('option');
     opt.value=c.id;            // value set as attribute, name only via textContent (XSS-safe)
     opt.textContent=c.name;
     sel.appendChild(opt);
   }
-  const wanted = activeConfigId || prev;
-  sel.value = [...sel.options].some(o=>o.value===wanted) ? wanted : '__new__';
+  const wanted = pendingNewConfig ? '__pending__' : (activeConfigId || prev);
+  if([...sel.options].some(o=>o.value===wanted)) sel.value = wanted;
+  else if(sel.options.length) sel.value = sel.options[0].value;
+}
+
+// Lock everything except Save while there is no active saved slot (first-run setup
+// or a pending new configuration). The whole Save slots section is also taken
+// off-limits while editing current gear — saving happens from the floating bar.
+function updateLockState(){
+  const locked = !activeConfigId;
+  const editing = editCurrentMode;
+  const setDisabled=(id,on)=>{ const el=document.getElementById(id); if(el) el.disabled=on; };
+  setDisabled('slotSelect', locked || editing);
+  setDisabled('deleteSlotBtn', locked || editing);
+  setDisabled('saveSlotBtn', editing);
+  setDisabled('loadSlotBtn', editing);
+  setDisabled('newConfigBtn', editing);
+  document.querySelectorAll('.preset-list button').forEach(b=>{ b.disabled = locked || editing; });
+  const upBtn=document.getElementById('upgradeViewBtn');
+  if(upBtn) upBtn.disabled = locked || editing;
+  document.body.classList.toggle('config-locked', locked);
+  document.body.classList.toggle('slots-disabled', locked || editing);
 }
 
 function updateConfigHeader(){
-  const name = activeConfigId ? configName(activeConfigId) : '';
+  const name = pendingNewConfig ? 'New configuration' : (activeConfigId ? configName(activeConfigId) : '');
   const title=document.getElementById('backpackTitle');
   if(title) title.textContent = name ? 'Backpack — '+name : 'Backpack';
   const pill=document.getElementById('dirtyPill');
-  if(pill) pill.hidden = !isDirty();
+  if(pill) pill.hidden = !(isDirty() || pendingNewConfig);
 }
 
 // Load a saved config into state and make it active. Returns true on success.
@@ -179,13 +204,16 @@ function applyConfig(id){
   try{
     state=normalizeState(JSON.parse(raw));
     activeConfigId=id;
+    pendingNewConfig=false;
+    prevActiveConfigId=null;
+    importedName='';
     editCurrentMode=false;
     backpackOpen=false;
     localStorage.setItem('ksGearPlanner.activeConfig', id);
     savedSnapshot=fingerprint();
-    document.getElementById('slotName').value=configName(id);
     render();
     renderSlotOptions();
+    updateLockState();
     return true;
   }catch(e){flash('Could not load configuration', true); return false;}
 }
@@ -324,6 +352,7 @@ function render(){
   updateConfigHeader();
   updateEditCurrentBtn();
   updateBackpackBtn();
+  updateLockState();
   saveActive();
 }
 
@@ -333,6 +362,13 @@ function updateEditCurrentBtn(){
   btn.textContent = editCurrentMode ? '✏️ Editing current gear' : '🔒 Edit Current Gear';
   btn.classList.toggle('active', editCurrentMode);
   document.body.classList.toggle('editing-current', editCurrentMode);
+  // Offer Cancel in the floating bar only when there's a slot to return to
+  // (i.e. not the very first profile being set up).
+  const cancelBtn=document.getElementById('cancelCurrentBtn');
+  if(cancelBtn){
+    const hasReturn = activeConfigId || (prevActiveConfigId && loadConfigIndex().some(c=>c.id===prevActiveConfigId));
+    cancelBtn.hidden = !(editCurrentMode && hasReturn);
+  }
 }
 
 function renderResources(){
@@ -549,7 +585,7 @@ function setEditCurrent(on){
   editCurrentMode = on;
   render();
   if(on){
-    if(!isDesktop()) setBackpackOpen(false);   // get the bottom-sheet out of the way
+    setBackpackOpen(false);   // backpack is locked while editing; collapse it everywhere
     // Let the drawer close + re-render settle, then bring the gear setup into view.
     setTimeout(scrollToGearSetup, isDesktop() ? 0 : 60);
   }
@@ -698,6 +734,7 @@ function animateDrawerTo(open){
 }
 
 function setBackpackOpen(open){
+  if(open && editCurrentMode) return;   // locked while editing current gear
   if(isDesktop()){ backpackOpen = open; updateBackpackBtn(); return; }
   animateDrawerTo(open);
 }
@@ -750,6 +787,7 @@ function initBackpackDrawer(){
 
   handle.addEventListener('pointerdown', (e)=>{
     if(isDesktop()) return;
+    if(editCurrentMode) return;   // backpack locked during gear edit
     clearTimeout(bpAnimTimer);
     bpAnimating = false;
     if(!bpFloating) floatSection();
@@ -840,7 +878,16 @@ function renderOverview(){
 }
 
 document.getElementById('editCurrentBtn').addEventListener('click', onEditCurrentToggle);
-document.getElementById('saveCurrentBtn').addEventListener('click', ()=>{ saveCurrentConfig(); setEditCurrent(false); });
+document.getElementById('saveCurrentBtn').addEventListener('click', ()=>{ saveCurrentConfig(()=>setEditCurrent(false)); });
+// Cancel current-gear editing: reload the active slot (discarding edits) or, for a
+// brand-new config started from an existing slot, fall back to that slot.
+function cancelEditCurrent(){
+  if(activeConfigId){ if(applyConfig(activeConfigId)) flash('Discarded changes'); return; }
+  if(prevActiveConfigId && loadConfigIndex().some(c=>c.id===prevActiveConfigId)){
+    if(applyConfig(prevActiveConfigId)) flash('Cancelled new configuration');
+  }
+}
+document.getElementById('cancelCurrentBtn').addEventListener('click', cancelEditCurrent);
 document.getElementById('resetTargetsBtn').addEventListener('click',()=>{
   for(const t of troops) for(const s of slots){
     const g=state.gear[t.key][s.key];
@@ -859,47 +906,92 @@ document.getElementById('resetGearsBtn').addEventListener('click',()=>{
 });
 document.getElementById('slotSelect').addEventListener('change',e=>{
   const id=e.target.value;
-  if(id==='__new__'){
-    // Start a fresh, unnamed config without touching current gear.
-    activeConfigId=null; savedSnapshot=null;
-    localStorage.removeItem('ksGearPlanner.activeConfig');
-    document.getElementById('slotName').value='';
-    updateConfigHeader();
+  if(id==='__pending__' || id===activeConfigId) return;
+  const target=id;
+  if(isDirty()){
+    confirmSwitch(
+      ()=>{ if(applyConfig(target)) flash(`Loaded “${configName(target)}”`); },
+      ()=>{ commitConfig(); if(applyConfig(target)) flash(`Loaded “${configName(target)}”`); },
+      ()=>{ e.target.value = activeConfigId || (pendingNewConfig?'__pending__':e.target.value); }
+    );
     return;
   }
-  if(id===activeConfigId) return;
-  if(isDirty() && !confirm('Discard unsaved changes and load this configuration?')){
-    e.target.value = activeConfigId || '__new__';   // revert selection
-    return;
-  }
-  if(applyConfig(id)) flash(`Loaded “${configName(id)}”`);
+  if(applyConfig(target)) flash(`Loaded “${configName(target)}”`);
 });
-function saveCurrentConfig(){
-  const sel=document.getElementById('slotSelect');
-  const nameInput=document.getElementById('slotName');
-  const typed=nameInput.value.trim();
+
+// Persist the live state into a slot. For a new/unnamed config a name is required.
+function commitConfig(name){
   const list=loadConfigIndex();
-  let id=sel.value;
-  if(id==='__new__' || !list.some(c=>c.id===id)){
+  let id;
+  if(activeConfigId && list.some(c=>c.id===activeConfigId)){
+    id=activeConfigId;                         // overwrite the active slot
+  }else{
     id=genId();
-    list.push({id, name: typed || ('Config '+(list.length+1))});
-  }else if(typed){
-    const c=list.find(c=>c.id===id); if(c) c.name=typed;
+    list.push({id, name: (name && name.trim()) || ('Config '+(list.length+1))});
   }
   saveConfigIndex(list);
   localStorage.setItem('ksGearPlanner.config.'+id, JSON.stringify(state));
   activeConfigId=id;
+  pendingNewConfig=false;
+  prevActiveConfigId=null;
+  importedName='';
   localStorage.setItem('ksGearPlanner.activeConfig', id);
   savedSnapshot=fingerprint();
-  nameInput.value=configName(id);
   renderSlotOptions();
   updateConfigHeader();
+  updateLockState();
   flash(`Saved “${configName(id)}”`);
   return id;
 }
-document.getElementById('saveSlotBtn').addEventListener('click', saveCurrentConfig);
+
+// Save handler: prompts for a name whenever there is no active slot yet.
+function saveCurrentConfig(after){
+  if(!activeConfigId){
+    promptConfigName(importedName||'', name=>{ commitConfig(name); if(after) after(); });
+    return;
+  }
+  commitConfig();
+  if(after) after();
+}
+
+// Begin a fresh, unnamed configuration: remember where we were, reset gear to base,
+// and drop into edit-current mode. Save will prompt for a name.
+function startNewConfig(){
+  prevActiveConfigId = activeConfigId;
+  activeConfigId = null;
+  pendingNewConfig = true;
+  savedSnapshot = null;
+  importedName = '';
+  localStorage.removeItem('ksGearPlanner.activeConfig');
+  state.gear = defaultGear();
+  renderSlotOptions();
+  updateLockState();
+  setEditCurrent(true);   // “change gear mode” + render + scroll into view
+}
+
+document.getElementById('newConfigBtn').addEventListener('click', ()=>{
+  if(isDirty()){
+    confirmSwitch(
+      ()=>startNewConfig(),
+      ()=>{ commitConfig(); startNewConfig(); },
+      ()=>{}
+    );
+    return;
+  }
+  startNewConfig();
+});
+
+document.getElementById('saveSlotBtn').addEventListener('click', ()=>saveCurrentConfig());
 document.getElementById('loadSlotBtn').addEventListener('click', revertToSaved);
 function revertToSaved(){
+  if(pendingNewConfig){
+    if(prevActiveConfigId && loadConfigIndex().some(c=>c.id===prevActiveConfigId)){
+      if(applyConfig(prevActiveConfigId)) flash('Cancelled new configuration');
+    }else{
+      flash('Save this slot or keep editing', true);
+    }
+    return;
+  }
   if(!activeConfigId){flash('No saved configuration is active', true); return;}
   if(!isDirty()){flash('No unsaved changes to revert'); return;}
   if(!confirm('Revert to the last saved version? Unsaved changes will be lost.')) return;
@@ -909,7 +1001,7 @@ const revertSavedBtn = document.getElementById('revertSavedBtn');
 if(revertSavedBtn) revertSavedBtn.addEventListener('click', revertToSaved);
 document.getElementById('deleteSlotBtn').addEventListener('click',()=>{
   const id=document.getElementById('slotSelect').value;
-  if(id==='__new__'){flash('Select a saved configuration first', true); return;}
+  if(!id || id==='__pending__'){flash('Select a saved configuration first', true); return;}
   const name=configName(id);
   if(!confirm(`Delete configuration “${name}”?`)) return;
   saveConfigIndex(loadConfigIndex().filter(c=>c.id!==id));
@@ -917,34 +1009,101 @@ document.getElementById('deleteSlotBtn').addEventListener('click',()=>{
   if(activeConfigId===id){
     activeConfigId=null; savedSnapshot=null;
     localStorage.removeItem('ksGearPlanner.activeConfig');
-    document.getElementById('slotName').value='';
   }
-  renderSlotOptions();
-  updateConfigHeader();
+  const remaining=loadConfigIndex();
+  if(remaining.length){
+    if(activeConfigId){ renderSlotOptions(); updateConfigHeader(); updateLockState(); }
+    else applyConfig(remaining[0].id);
+  }else{
+    startFirstRunSetup();   // no slots left — back to the welcome flow
+  }
   flash(`Deleted “${name}”`);
 });
+
+/* ---- Slot modals: welcome, name prompt, switch confirmation ---- */
+function startFirstRunSetup(){
+  activeConfigId=null;
+  pendingNewConfig=false;
+  prevActiveConfigId=null;
+  savedSnapshot=null;
+  importedName='';
+  localStorage.removeItem('ksGearPlanner.activeConfig');
+  renderSlotOptions();
+  updateConfigHeader();
+  updateLockState();
+  document.getElementById('welcomeModal').classList.add('show');
+}
+function beginSetup(){
+  document.getElementById('welcomeModal').classList.remove('show');
+  pendingNewConfig=true;
+  prevActiveConfigId=null;
+  savedSnapshot=null;
+  renderSlotOptions();
+  updateLockState();
+  setEditCurrent(true);
+}
+const welcomeStartBtn=document.getElementById('welcomeStartBtn');
+if(welcomeStartBtn) welcomeStartBtn.addEventListener('click', beginSetup);
+
+let nameModalResolve=null;
+function promptConfigName(initial, onConfirm){
+  const input=document.getElementById('nameModalInput');
+  input.value=initial||'';
+  nameModalResolve=onConfirm;
+  document.getElementById('nameModal').classList.add('show');
+  setTimeout(()=>{ input.focus(); input.select(); }, 30);
+}
+function closeNameModal(){ document.getElementById('nameModal').classList.remove('show'); nameModalResolve=null; }
+function confirmNameModal(){
+  const name=document.getElementById('nameModalInput').value.trim();
+  if(!name){ flash('Enter a name', true); return; }
+  const cb=nameModalResolve; closeNameModal();
+  if(cb) cb(name);
+}
+document.getElementById('nameSaveBtn').addEventListener('click', confirmNameModal);
+document.getElementById('nameCancelBtn').addEventListener('click', closeNameModal);
+document.getElementById('nameModalInput').addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); confirmNameModal(); } });
+document.getElementById('nameModal').addEventListener('click', e=>{ if(e.target.id==='nameModal') closeNameModal(); });
+
+let switchModalChoice=null;
+function confirmSwitch(onDiscard,onSave,onCancel){
+  switchModalChoice={onDiscard,onSave,onCancel};
+  document.getElementById('switchModal').classList.add('show');
+}
+function resolveSwitch(kind){
+  document.getElementById('switchModal').classList.remove('show');
+  const c=switchModalChoice; switchModalChoice=null;
+  if(c && c[kind]) c[kind]();
+}
+document.getElementById('switchDiscardBtn').addEventListener('click', ()=>resolveSwitch('onDiscard'));
+document.getElementById('switchSaveBtn').addEventListener('click', ()=>resolveSwitch('onSave'));
+document.getElementById('switchCancelBtn').addEventListener('click', ()=>resolveSwitch('onCancel'));
+document.getElementById('switchModal').addEventListener('click', e=>{ if(e.target.id==='switchModal') resolveSwitch('onCancel'); });
+document.addEventListener('keydown', e=>{
+  if(e.key!=='Escape') return;
+  if(document.getElementById('nameModal').classList.contains('show')){ closeNameModal(); return; }
+  if(document.getElementById('switchModal').classList.contains('show')){ resolveSwitch('onCancel'); return; }
+});
 function buildExportPayload(){
-  return {...state, configName: activeConfigId ? configName(activeConfigId) : (document.getElementById('slotName').value.trim() || undefined)};
+  return {...state, configName: activeConfigId ? configName(activeConfigId) : (importedName || undefined)};
 }
 // Shared import routine for the manual textarea and the clipboard paste button.
-// After loading, preselect the matching saved slot (by name) so Save overwrites it,
-// otherwise fall back to "➕ New configuration".
+// Imported setups become a pending, unnamed config; Save prompts for a name
+// (prefilled with the imported name).
 function importFromText(text){
   let parsed;
   try{ parsed=JSON.parse(text); }
   catch(e){ flash('Import failed: invalid JSON', true); return false; }
   state=normalizeState(parsed);
-  activeConfigId=null; savedSnapshot=null;
+  activeConfigId=null;
+  pendingNewConfig=true;
+  prevActiveConfigId=null;
+  savedSnapshot=null;
   localStorage.removeItem('ksGearPlanner.activeConfig');
-  const name = (parsed && typeof parsed.configName==='string') ? parsed.configName : '';
-  document.getElementById('slotName').value = name;
+  importedName = (parsed && typeof parsed.configName==='string') ? parsed.configName : '';
   renderSlotOptions();
-  const sel=document.getElementById('slotSelect');
-  if(sel){
-    const match = name ? loadConfigIndex().find(c=>c.name.trim().toLowerCase()===name.trim().toLowerCase()) : null;
-    sel.value = match ? match.id : '__new__';
-  }
   render();
+  updateLockState();
   flash('Imported setup — Save to keep it');
   return true;
 }
@@ -1128,16 +1287,27 @@ function overviewHtmlForGear(gear){
   return cards.join('');
 }
 
-// Initialize named-config UI before first render.
-if(activeConfigId && loadConfigIndex().some(c=>c.id===activeConfigId)){
-  document.getElementById('slotName').value=configName(activeConfigId);
-  savedSnapshot=fingerprint();
-}else{
-  activeConfigId=null;
-  localStorage.removeItem('ksGearPlanner.activeConfig');
-}
-renderSlotOptions();
-render();
+// Initialize the slot-based UI / first-run setup before first render.
+(function initConfigs(){
+  const index=loadConfigIndex();
+  if(activeConfigId && index.some(c=>c.id===activeConfigId)){
+    savedSnapshot=fingerprint();
+    renderSlotOptions();
+    render();
+  }else if(index.length){
+    // Slots exist but none is active — open the first one.
+    activeConfigId=null;
+    localStorage.removeItem('ksGearPlanner.activeConfig');
+    if(!applyConfig(index[0].id)){ renderSlotOptions(); render(); }
+  }else{
+    // No slots yet — greet with the first-run welcome overlay.
+    activeConfigId=null;
+    localStorage.removeItem('ksGearPlanner.activeConfig');
+    renderSlotOptions();
+    render();
+    document.getElementById('welcomeModal').classList.add('show');
+  }
+})();
 initBackpackDrawer();
 
 // iOS Safari ignores `user-scalable=no`, so pinch- and double-tap-zoom stay

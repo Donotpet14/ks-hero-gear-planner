@@ -811,6 +811,14 @@
       color: #06121b;
       cursor: pointer;
     }
+    .edit-current-bar #cancelCurrentBtn {
+      flex: 0 0 auto;
+      margin: 0;
+      min-height: 44px;
+      padding: .55rem .9rem;
+      border-radius: 12px;
+      white-space: nowrap;
+    }
     body.editing-current .container {
       padding-bottom: 96px;
     }
@@ -1082,6 +1090,30 @@
       overflow: auto;
       padding: 1rem;
     }
+    /* Compact slot dialogs (welcome / name / switch). */
+    .welcome-card, .name-card, .switch-card { width: min(440px, 100%); }
+    .welcome-card h2, .name-card h2, .switch-card h2 { margin-top: 0; }
+    .welcome-points { margin: .6rem 0 0; padding-left: 1.1rem; display: grid; gap: .35rem; }
+    .welcome-points li { font-size: .9rem; }
+    #nameModalInput { margin-top: .9rem; }
+
+    /* Locked sections while no save slot is active (first-run / pending new config). */
+    body.config-locked #suggestSection,
+    body.config-locked #planOverviewSection { opacity: .45; }
+    body.config-locked #suggestSection { pointer-events: none; }
+    .new-config-btn { margin: 0; width: 100%; }
+
+    /* While editing current gear: hide the plan overview and disable the Save slots card. */
+    body.editing-current #planOverviewSection { display: none; }
+    body.editing-current #slotSection { opacity: .5; pointer-events: none; }
+
+    /* The backpack is locked while editing current gear: remove its expand
+       affordances. Hide the desktop "Edit materials" toggle outright, but for the
+       mobile handle keep its box in flow (so --backpack-h, which pins the troop
+       tabs, stays unchanged) and just hide the grip + make it inert. */
+    body.editing-current #backpackEditBtn { display: none; }
+    body.editing-current #backpackHandle { pointer-events: none; cursor: default; }
+    body.editing-current .bp-handle-grip { opacity: 0; }
 
     @media (min-width: 720px) {
       .material-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }

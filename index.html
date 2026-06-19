@@ -47,7 +47,7 @@
   </article>
 
   <div class="toolbar">
-    <article>
+    <article id="suggestSection">
       <div class="section-head">
         <div>
           <h2>Suggest upgrades</h2>
@@ -63,7 +63,7 @@
       </div>
     </article>
 
-    <article>
+    <article id="slotSection">
       <div class="section-head">
         <div>
           <h2>Save slots</h2>
@@ -75,10 +75,7 @@
           <label for="slotSelect">Configuration</label>
           <select id="slotSelect" aria-label="Saved configuration"></select>
         </div>
-        <div class="config-field">
-          <label for="slotName">Name</label>
-          <input id="slotName" type="text" placeholder="Configuration name" aria-label="Configuration name">
-        </div>
+        <button id="newConfigBtn" class="secondary new-config-btn" type="button">➕ New configuration</button>
         <div class="config-actions">
           <button id="saveSlotBtn">💾 Save</button>
           <button id="loadSlotBtn" class="secondary">↺ Revert</button>
@@ -106,7 +103,7 @@
   <div id="tabs" class="troop-tabs"></div>
   <section id="troopWrap" class="troop-wrap"></section>
 
-  <article style="margin-top:1rem">
+  <article id="planOverviewSection" style="margin-top:1rem">
     <div class="section-head">
       <div>
         <h2>Plan overview</h2>
@@ -122,6 +119,7 @@
 
 <div id="editCurrentBar" class="edit-current-bar" role="region" aria-label="Edit current gear">
   <small>Set up your current gear, and tap Save when done to start planning your upgrades.</small>
+  <button id="cancelCurrentBtn" class="secondary" type="button" hidden>Cancel</button>
   <button id="saveCurrentBtn" type="button">💾 Save Current Gear</button>
 </div>
 
@@ -153,6 +151,53 @@
       <button id="closeUpgradeViewBtn" class="secondary">Close</button>
     </div>
     <div id="upgradeViewBody" class="overview-grid"></div>
+  </article>
+</div>
+
+<div id="welcomeModal" class="modal" role="dialog" aria-modal="true">
+  <article class="modal-card welcome-card">
+    <h2>Welcome to the Gear Planner</h2>
+    <p>This tool keeps each gear plan in its own <strong>save slot</strong>. Start by setting up your current gear, then plan your upgrades. When you save, you'll give the slot a name.</p>
+    <ul class="welcome-points">
+      <li>🔧 Set your real current gear first.</li>
+      <li>🎯 Plan target upgrades and check material costs.</li>
+      <li>💾 Save it as a named slot and switch between plans anytime.</li>
+    </ul>
+    <footer style="display:flex; gap:.6rem; flex-wrap:wrap; margin-top:1rem">
+      <button id="welcomeStartBtn" type="button">🔧 Start setup</button>
+    </footer>
+  </article>
+</div>
+
+<div id="nameModal" class="modal" role="dialog" aria-modal="true">
+  <article class="modal-card name-card">
+    <div class="section-head">
+      <div>
+        <h2>Name this save slot</h2>
+        <small>Give your configuration a name so you can find it later.</small>
+      </div>
+    </div>
+    <input id="nameModalInput" type="text" placeholder="e.g. Main account, Bear setup" aria-label="Configuration name" maxlength="60">
+    <footer style="display:flex; gap:.6rem; flex-wrap:wrap; margin-top:1rem">
+      <button id="nameSaveBtn" type="button">💾 Save slot</button>
+      <button id="nameCancelBtn" class="secondary" type="button">Cancel</button>
+    </footer>
+  </article>
+</div>
+
+<div id="switchModal" class="modal" role="dialog" aria-modal="true">
+  <article class="modal-card switch-card">
+    <div class="section-head">
+      <div>
+        <h2>Unsaved changes</h2>
+        <small>You have unsaved changes. What would you like to do?</small>
+      </div>
+    </div>
+    <footer style="display:flex; gap:.6rem; flex-wrap:wrap; margin-top:1rem">
+      <button id="switchSaveBtn" type="button">💾 Save &amp; continue</button>
+      <button id="switchDiscardBtn" class="contrast" type="button">🗑 Discard changes</button>
+      <button id="switchCancelBtn" class="secondary" type="button">Cancel</button>
+    </footer>
   </article>
 </div>
 
