@@ -81,14 +81,12 @@ let pendingSuggestion = null;
 
 /* ---- Current-gear edit guard ----
    Target steppers are always editable (planning is the common action).
-   Current steppers are locked by default so they can't be nudged by accident.
-   They can be unlocked per-card (unlockedCards) or all at once (editCurrentMode).
-   This UI state is intentionally ephemeral and never persisted. */
+   Current steppers are hidden by default and only revealed in editCurrentMode,
+   so they can't be nudged by accident. This UI state is never persisted. */
 let editCurrentMode = false;
 let backpackOpen = false;
-const unlockedCards = new Set();
 function cardKey(troopKey, slotKey){return troopKey + '/' + slotKey;}
-function isCurrentEditable(troopKey, slotKey){return editCurrentMode || unlockedCards.has(cardKey(troopKey, slotKey));}
+function isCurrentEditable(troopKey, slotKey){return editCurrentMode;}
 
 function validStage(v){v=+v; return stageValues.includes(v)?v:1}
 function validForge(v){v=+v; return forgeValues.includes(v)?v:10}
@@ -183,7 +181,6 @@ function applyConfig(id){
     activeConfigId=id;
     editCurrentMode=false;
     backpackOpen=false;
-    unlockedCards.clear();
     localStorage.setItem('ksGearPlanner.activeConfig', id);
     savedSnapshot=fingerprint();
     document.getElementById('slotName').value=configName(id);
@@ -273,7 +270,8 @@ function aggregateGains(gear=state.gear){
 // Builds one troop card: all 4 gears (current → new when changed) grouped together,
 // followed by the troop's combined material cost as pills. getFromTo(troop,slot)
 // returns {fromExp,fromForge,toExp,toForge}. Shared by overview and the suggestion modal.
-function troopOverviewCard(troopKey, getFromTo){
+function troopOverviewCard(troopKey, getFromTo, opts={}){
+  const {showCost=true} = opts;
   const t = troops.find(x=>x.key===troopKey);
   let cost = emptyCost();
   const cells = slots.map(s=>{
@@ -291,7 +289,7 @@ function troopOverviewCard(troopKey, getFromTo){
   return `<div class="overview-card troop-overview-card">
     <div class="overview-header">${t.emoji} ${t.label}</div>
     <div class="troop-gear-grid">${cells}</div>
-    <div class="troop-cost-pills">${pills || '<span class="muted">No upgrades planned</span>'}</div>
+    ${showCost ? `<div class="troop-cost-pills">${pills || '<span class="muted">No upgrades planned</span>'}</div>` : ''}
   </div>`;
 }
 
@@ -332,7 +330,7 @@ function render(){
 function updateEditCurrentBtn(){
   const btn=document.getElementById('editCurrentBtn');
   if(!btn) return;
-  btn.textContent = editCurrentMode ? '✏️ Editing current — done' : '🔒 Edit current';
+  btn.textContent = editCurrentMode ? '✏️ Editing current gear' : '🔒 Edit Current Gear';
   btn.classList.toggle('active', editCurrentMode);
   document.body.classList.toggle('editing-current', editCurrentMode);
 }
@@ -430,7 +428,6 @@ function renderTroops(){
   `).join('');
 
   wrap.querySelectorAll('[data-step]').forEach(btn=>btn.addEventListener('click', onStepClick));
-  wrap.querySelectorAll('[data-lock]').forEach(btn=>btn.addEventListener('click', onLockToggle));
 }
 
 function tileHtml(troopKey, slotKey, exp, forge, small=false){
@@ -500,12 +497,9 @@ function levelRow(label, troopKey, slotKey, g, mode){
   const forgeIndex = forgeValues.indexOf(g[forgeField]);
 
   const locked = mode === 'current' && !isCurrentEditable(troopKey, slotKey);
-  const lockBtn = mode === 'current'
-    ? `<button class="current-lock-btn" data-lock="${cardKey(troopKey, slotKey)}" title="${locked ? 'Unlock to edit your current gear for this piece' : 'Lock current gear for this piece'}" aria-pressed="${locked ? 'false' : 'true'}">${locked ? '🔒' : '✏️'}</button>`
-    : '';
 
   return `<div class="level-row ${mode}${locked ? ' locked' : ''}">
-    <div class="level-label">${label}${lockBtn}</div>
+    <div class="level-label">${label}</div>
     <div class="stepper-group">
       ${stepper('Imbue', troopKey, slotKey, expField, stageLabel(g[expField]), expIndex > expMinIndex, expIndex < expMaxIndex, locked)}
       ${stepper('Forge', troopKey, slotKey, forgeField, g[forgeField], forgeIndex > forgeMinIndex, forgeIndex < forgeMaxIndex, locked)}
@@ -549,16 +543,27 @@ function onStepClick(e){
   render();
 }
 
-function onLockToggle(e){
-  const key = e.currentTarget.dataset.lock;
-  if(unlockedCards.has(key)) unlockedCards.delete(key); else unlockedCards.add(key);
+function onEditCurrentToggle(){ setEditCurrent(!editCurrentMode); }
+
+function setEditCurrent(on){
+  editCurrentMode = on;
   render();
+  if(on){
+    if(!isDesktop()) setBackpackOpen(false);   // get the bottom-sheet out of the way
+    // Let the drawer close + re-render settle, then bring the gear setup into view.
+    setTimeout(scrollToGearSetup, isDesktop() ? 0 : 60);
+  }
 }
 
-function onEditCurrentToggle(){
-  editCurrentMode = !editCurrentMode;
-  if(!editCurrentMode) unlockedCards.clear();
-  render();
+// Scroll so the troop tabs sit just below the sticky backpack header, with the
+// gear cards visible underneath. --backpack-h tracks the closed header height.
+function scrollToGearSetup(){
+  const tabs = document.getElementById('tabs');
+  if(!tabs) return;
+  const bpVar = getComputedStyle(document.documentElement).getPropertyValue('--backpack-h');
+  const offset = (parseFloat(bpVar) || 0) + 16;
+  const y = window.scrollY + tabs.getBoundingClientRect().top - offset;
+  window.scrollTo({top: Math.max(0, y), behavior: 'smooth'});
 }
 
 /* ---- Backpack drawer: draggable full-screen bottom-sheet (mobile) ---- */
@@ -835,6 +840,7 @@ function renderOverview(){
 }
 
 document.getElementById('editCurrentBtn').addEventListener('click', onEditCurrentToggle);
+document.getElementById('saveCurrentBtn').addEventListener('click', ()=>{ saveCurrentConfig(); setEditCurrent(false); });
 document.getElementById('resetTargetsBtn').addEventListener('click',()=>{
   for(const t of troops) for(const s of slots){
     const g=state.gear[t.key][s.key];
@@ -868,7 +874,7 @@ document.getElementById('slotSelect').addEventListener('change',e=>{
   }
   if(applyConfig(id)) flash(`Loaded “${configName(id)}”`);
 });
-document.getElementById('saveSlotBtn').addEventListener('click',()=>{
+function saveCurrentConfig(){
   const sel=document.getElementById('slotSelect');
   const nameInput=document.getElementById('slotName');
   const typed=nameInput.value.trim();
@@ -889,7 +895,9 @@ document.getElementById('saveSlotBtn').addEventListener('click',()=>{
   renderSlotOptions();
   updateConfigHeader();
   flash(`Saved “${configName(id)}”`);
-});
+  return id;
+}
+document.getElementById('saveSlotBtn').addEventListener('click', saveCurrentConfig);
 document.getElementById('loadSlotBtn').addEventListener('click', revertToSaved);
 function revertToSaved(){
   if(!activeConfigId){flash('No saved configuration is active', true); return;}
@@ -999,6 +1007,22 @@ document.getElementById('applySuggestBtn').addEventListener('click',()=>{
   closeSuggest();
 });
 function closeSuggest(){document.getElementById('suggestModal').classList.remove('show'); pendingSuggestion=null;}
+
+// Upgrade view: a clean glanceable overlay of every troop's gear (current → target),
+// without material costs or bonus stats, for working through the actual upgrades.
+function renderUpgradeView(){
+  const cards = troops.map(t=>troopOverviewCard(t.key, (tk,sk)=>{
+    const g = state.gear[tk][sk];
+    return {fromExp:g.currentExp, fromForge:g.currentForge, toExp:g.targetExp, toForge:g.targetForge};
+  }, {showCost:false}));
+  document.getElementById('upgradeViewBody').innerHTML = cards.join('');
+}
+function openUpgradeView(){renderUpgradeView(); document.getElementById('upgradeViewModal').classList.add('show');}
+function closeUpgradeView(){document.getElementById('upgradeViewModal').classList.remove('show');}
+document.getElementById('upgradeViewBtn').addEventListener('click', openUpgradeView);
+document.getElementById('closeUpgradeViewBtn').addEventListener('click', closeUpgradeView);
+document.getElementById('upgradeViewModal').addEventListener('click', e=>{ if(e.target.id==='upgradeViewModal') closeUpgradeView(); });
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeUpgradeView(); });
 
 const presetNames={balanced:'Balanced',attack:'Attack Focus',defense:'Defense Focus',bear:'Bear / Damage',castle:'Castle / PvP'};
 const troopWeights={
@@ -1115,6 +1139,17 @@ if(activeConfigId && loadConfigIndex().some(c=>c.id===activeConfigId)){
 renderSlotOptions();
 render();
 initBackpackDrawer();
+
+// iOS Safari ignores `user-scalable=no`, so pinch- and double-tap-zoom stay
+// enabled. Block them explicitly to keep the layout locked like an app.
+document.addEventListener('gesturestart', e=>e.preventDefault());
+document.addEventListener('gesturechange', e=>e.preventDefault());
+let lastTouchEnd = 0;
+document.addEventListener('touchend', e=>{
+  const now = Date.now();
+  if(now - lastTouchEnd <= 300) e.preventDefault();   // suppress double-tap zoom
+  lastTouchEnd = now;
+}, {passive:false});
 
 // Keep the troop tab bar pinned just below the sticky backpack. The backpack's
 // height changes (e.g. toggling "Edit backpack" swaps the material strip for the

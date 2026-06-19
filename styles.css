@@ -72,8 +72,9 @@
     .hero p { margin: 0; color: var(--ks-muted); max-width: 720px; }
 
     .site-footer {
-      margin-top: 2rem;
-      padding-top: 1.2rem;
+      max-width: 1180px;
+      margin: 2rem auto 0;
+      padding: 1.2rem 1rem 2rem;
       border-top: 1px solid var(--ks-border);
       text-align: center;
       color: var(--ks-muted);
@@ -148,6 +149,11 @@
     }
     .bp-drawer-inner {
       padding-top: .8rem;
+    }
+    .bp-drawer-hint {
+      display: block;
+      margin-bottom: .6rem;
+      font-size: .8rem;
     }
     .bp-handle {
       width: 100%;
@@ -253,7 +259,7 @@
     .material-status { font-size: .78rem; color: var(--ks-muted); }
     .material-card input {
       margin: 0;
-      height: 42px;
+      min-height: 44px;
       font-weight: 750;
       border-radius: 14px;
     }
@@ -296,6 +302,69 @@
     .pill.info { color: #d8fbff; border-color: rgba(53,217,230,.35); background: rgba(53,217,230,.10); }
     .pill.warn { color: #fff0cf; border-color: rgba(238,178,86,.5); background: rgba(238,178,86,.16); }
     .pill[hidden] { display: none; }
+
+    /* Frosted-glass form fields — gives native inputs/selects/textareas a
+       cohesive glassy surface and, crucially, a 16px font-size so they no
+       longer inherit the global .5rem rule (which made them look tiny and
+       triggered iOS focus-zoom on mobile). */
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),
+    select,
+    textarea {
+      --pico-background-color: transparent;
+      --pico-border-color: var(--ks-border);
+      --pico-color: var(--ks-text);
+      box-sizing: border-box;
+      width: 100%;
+      min-height: 44px;
+      margin: 0;
+      padding: .6rem .8rem;
+      font-size: 1rem;
+      line-height: 1.4;
+      font-weight: 600;
+      color: var(--ks-text);
+      background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.03));
+      border: 1px solid var(--ks-border);
+      border-radius: 12px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 2px 8px rgba(0,0,0,.12);
+      transition: border-color .18s ease, background .2s ease, box-shadow .2s ease;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"])::placeholder,
+    textarea::placeholder {
+      color: var(--ks-muted);
+      opacity: 1;
+    }
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):hover,
+    select:hover,
+    textarea:hover {
+      border-color: rgba(255,255,255,.2);
+      background: linear-gradient(180deg, rgba(255,255,255,.1), rgba(255,255,255,.045));
+    }
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):focus,
+    select:focus,
+    textarea:focus {
+      outline: none;
+      border-color: var(--ks-cyan);
+      background: linear-gradient(180deg, rgba(53,217,230,.1), rgba(53,217,230,.04));
+      box-shadow: 0 0 0 3px rgba(53,217,230,.22), inset 0 1px 0 rgba(255,255,255,.08);
+    }
+    /* Custom chevron for selects (native arrow removed via appearance:none). */
+    select {
+      padding-right: 2.2rem;
+      background-image:
+        linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.03)),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%239dadc8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+      background-repeat: no-repeat, no-repeat;
+      background-position: center, right .8rem center;
+      background-size: auto, 14px;
+    }
+    select:focus {
+      background-image:
+        linear-gradient(180deg, rgba(53,217,230,.1), rgba(53,217,230,.04)),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2335d9e6' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    }
+    select option { color: #0b1020; }
 
     /* Frosted-glass buttons — overrides Pico's flat solid defaults so every
        button matches the fluid glassy surfaces. */
@@ -691,34 +760,59 @@
       background: linear-gradient(180deg, rgba(238,178,86,.5), rgba(181,103,12,.3));
       border-color: rgba(238,178,86,.72);
     }
-    /* Edit-current mode: focus on real gear only — hide the target steppers. */
+    /* Exactly one box per gear: Target normally, Current while editing. */
     body.editing-current .level-row.target {
       display: none;
     }
-    .level-row.current.locked .stepper-group {
+    body:not(.editing-current) .level-row.current {
       display: none;
-    }
-    .level-row.current.locked .level-label {
-      margin: 0;
-    }
-    .current-lock-btn {
-      margin-left: .4rem;
-      padding: 1px .4rem;
-      border: 0;
-      border-radius: 8px;
-      background: rgba(255,255,255,.1);
-      color: var(--ks-text);
-      font-size: .8rem;
-      line-height: 1.5;
-      cursor: pointer;
-      vertical-align: middle;
-    }
-    .level-row.current:not(.locked) .current-lock-btn {
-      background: rgba(238,178,86,.32);
     }
     #editCurrentBtn.active {
       background: linear-gradient(180deg, var(--ks-cyan), var(--ks-cyan-dark));
       color: #fff;
+    }
+    /* Floating bar shown only while editing current gear. */
+    .edit-current-bar {
+      display: none;
+      position: fixed;
+      left: 50%;
+      bottom: max(12px, env(safe-area-inset-bottom));
+      transform: translateX(-50%);
+      z-index: 90;
+      width: min(560px, calc(100% - 24px));
+      align-items: center;
+      gap: .75rem;
+      padding: .7rem .8rem .7rem 1rem;
+      border-radius: 16px;
+      border: 1px solid rgba(53,217,230,.45);
+      background: linear-gradient(180deg, rgba(13,20,34,.96), rgba(9,14,24,.96));
+      box-shadow: 0 14px 40px rgba(0,0,0,.5);
+      backdrop-filter: blur(12px);
+    }
+    body.editing-current .edit-current-bar {
+      display: flex;
+    }
+    .edit-current-bar small {
+      flex: 1;
+      color: var(--ks-muted);
+      font-size: .8rem;
+      line-height: 1.35;
+    }
+    .edit-current-bar #saveCurrentBtn {
+      flex: 0 0 auto;
+      margin: 0;
+      min-height: 44px;
+      padding: .55rem 1rem;
+      border: 0;
+      border-radius: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+      background: linear-gradient(180deg, var(--ks-cyan), var(--ks-cyan-dark));
+      color: #06121b;
+      cursor: pointer;
+    }
+    body.editing-current .container {
+      padding-bottom: 96px;
     }
     .stepper-group {
       display: flex;

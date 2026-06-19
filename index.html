@@ -21,7 +21,6 @@
     <div class="section-head">
       <div>
         <h2 id="backpackTitle">Backpack</h2>
-        <small>Enter 0 to treat a material as unlimited.</small>
       </div>
       <div class="backpack-head-actions">
         <span id="overallStatus" class="pill ok">✅ Enough</span>
@@ -32,9 +31,10 @@
     <div id="resourceStrip" class="material-strip"></div>
     <div id="backpackDrawer" class="bp-drawer">
       <div class="bp-drawer-inner">
+        <small class="muted bp-drawer-hint">Enter 0 to treat a material as unlimited.</small>
         <div id="resourceGrid" class="material-grid"></div>
         <div class="status-row">
-          <button id="editCurrentBtn" class="secondary" title="Unlock the Current steppers on every card so you can correct your real gear. Off by default so planning targets stays safe.">🔒 Edit current</button>
+          <button id="editCurrentBtn" class="secondary" title="Set up your real current gear. Hidden by default so your planning targets stay safe.">🔒 Edit Current Gear</button>
           <button id="revertSavedBtn" class="secondary" title="Discard unsaved changes and reload the last saved version of this configuration.">↺ Revert to saved</button>
           <button id="resetTargetsBtn" class="secondary">Reset targets</button>
           <button id="resetGearsBtn" class="contrast">Reset all gears</button>
@@ -112,12 +112,18 @@
         <h2>Plan overview</h2>
         <small id="overviewCount">No planned changes</small>
       </div>
+      <button id="upgradeViewBtn" class="secondary">📋 Upgrade view</button>
     </div>
     <div id="overviewBody" class="overview-grid"></div>
   </article>
-
-  <footer class="site-footer">© by Donotpetハナソ | #395</footer>
 </main>
+
+<footer class="site-footer">© by Donotpetハナソ | #395</footer>
+
+<div id="editCurrentBar" class="edit-current-bar" role="region" aria-label="Edit current gear">
+  <small>Set up your current gear, and tap Save when done to start planning your upgrades.</small>
+  <button id="saveCurrentBtn" type="button">💾 Save Current Gear</button>
+</div>
 
 <div id="suggestModal" class="modal" role="dialog" aria-modal="true">
   <article class="modal-card">
@@ -134,6 +140,19 @@
       <button id="applySuggestBtn">Apply suggestion</button>
       <button id="cancelSuggestBtn" class="secondary">Cancel</button>
     </footer>
+  </article>
+</div>
+
+<div id="upgradeViewModal" class="modal" role="dialog" aria-modal="true">
+  <article class="modal-card">
+    <div class="section-head">
+      <div>
+        <h2>Upgrade view</h2>
+        <small>Gear upgrades at a glance — current ➔ target.</small>
+      </div>
+      <button id="closeUpgradeViewBtn" class="secondary">Close</button>
+    </div>
+    <div id="upgradeViewBody" class="overview-grid"></div>
   </article>
 </div>
 
