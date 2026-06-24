@@ -1090,12 +1090,274 @@
       overflow: auto;
       padding: 1rem;
     }
-    /* Compact slot dialogs (welcome / name / switch). */
-    .welcome-card, .name-card, .switch-card { width: min(440px, 100%); }
-    .welcome-card h2, .name-card h2, .switch-card h2 { margin-top: 0; }
-    .welcome-points { margin: .6rem 0 0; padding-left: 1.1rem; display: grid; gap: .35rem; }
-    .welcome-points li { font-size: .9rem; }
+    /* Compact slot dialogs (name / switch). */
+    .name-card, .switch-card { width: min(440px, 100%); }
+    .name-card h2, .switch-card h2 { margin-top: 0; }
     #nameModalInput { margin-top: .9rem; }
+
+    /* ---- Welcome splash screen ---- */
+    .welcome-card {
+      width: min(700px, 100%);
+      padding: 0;
+      position: relative;
+      overflow: hidden;
+      border: 1px solid var(--ks-border);
+      animation: welcomeIn .42s cubic-bezier(.22, 1, .36, 1);
+    }
+    @keyframes welcomeIn {
+      from { opacity: 0; transform: translateY(14px) scale(.985); }
+      to   { opacity: 1; transform: none; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .welcome-card { animation: none; }
+    }
+    .welcome-x {
+      position: absolute;
+      top: .7rem;
+      right: .7rem;
+      z-index: 2;
+      margin: 0;
+      width: 2rem;
+      height: 2rem;
+      padding: 0;
+      border-radius: 999px;
+      line-height: 1;
+      font-size: 1rem;
+    }
+
+    .welcome-hero {
+      position: relative;
+      padding: 1.7rem 1.4rem 1.3rem;
+      text-align: center;
+      background:
+        radial-gradient(circle at 18% 0%, rgba(53,217,230,.22), transparent 42%),
+        radial-gradient(circle at 86% 8%, rgba(141,112,242,.22), transparent 46%),
+        radial-gradient(circle at 50% 120%, rgba(238,178,86,.16), transparent 50%),
+        linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.015));
+      border-bottom: 1px solid var(--ks-border);
+    }
+    .welcome-emblem {
+      position: relative;
+      width: 96px;
+      height: 64px;
+      margin: 0 auto .8rem;
+    }
+    .welcome-emblem .we-icon {
+      position: absolute;
+      width: 44px;
+      height: 44px;
+      object-fit: contain;
+      border-radius: 12px;
+      padding: 4px;
+      border: 1px solid var(--ks-border);
+      background: linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.04));
+      box-shadow: 0 10px 22px rgba(0,0,0,.35);
+    }
+    .welcome-emblem .we-icon-1 { left: 4px;  top: 12px; transform: rotate(-12deg); z-index: 1; }
+    .welcome-emblem .we-icon-2 { left: 50%;  top: 0;    transform: translateX(-50%); width: 50px; height: 50px; z-index: 3; }
+    .welcome-emblem .we-icon-3 { right: 4px; top: 12px; transform: rotate(12deg);  z-index: 1; }
+    .welcome-emblem .we-spark {
+      position: absolute;
+      right: -4px;
+      bottom: -6px;
+      font-size: 1.15rem;
+      z-index: 4;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,.5));
+    }
+    .welcome-emblem .we-spark .ico { width: 1.15rem; height: 1.15rem; }
+    .ico { display: block; }
+    .welcome-hero h2 {
+      margin: 0 0 .4rem;
+      font-size: 1.35rem;
+      letter-spacing: -.02em;
+      line-height: 1.2;
+    }
+    .welcome-tagline {
+      margin: 0 auto;
+      max-width: 46ch;
+      color: var(--ks-muted);
+      font-size: .95rem;
+      line-height: 1.45;
+    }
+    .welcome-chips {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: .4rem;
+      margin-top: .95rem;
+    }
+    .welcome-chips .mat-chip { font-size: .8rem; font-weight: 700; cursor: default; }
+
+    .welcome-block { padding: 1.1rem 1.4rem 0; }
+    .welcome-block:last-of-type { padding-bottom: .3rem; }
+    .welcome-kicker {
+      margin: 0 0 .7rem;
+      font-size: .72rem;
+      font-weight: 800;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--ks-cyan);
+    }
+
+    .welcome-features {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: .6rem;
+    }
+    .wf-tile {
+      display: flex;
+      flex-direction: column;
+      gap: .15rem;
+      padding: .7rem .8rem;
+      border-radius: 14px;
+      border: 1px solid var(--ks-border);
+      background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.025));
+      transition: transform .18s ease, border-color .18s ease, background .18s ease;
+    }
+    .wf-tile:hover {
+      transform: translateY(-2px);
+      border-color: rgba(53,217,230,.4);
+      background: linear-gradient(180deg, rgba(53,217,230,.12), rgba(255,255,255,.03));
+    }
+    .wf-tile .wf-emoji { font-size: 1.3rem; line-height: 1; margin-bottom: .15rem; }
+    .wf-tile .wf-emoji .ico { width: 1.55rem; height: 1.55rem; }
+    .wf-tile strong { font-size: .92rem; font-weight: 750; }
+    .wf-tile small { font-size: .76rem; line-height: 1.4; color: var(--ks-muted); }
+
+    .welcome-steps {
+      position: relative;
+      display: flex;
+      align-items: stretch;
+      justify-content: space-between;
+      gap: .5rem;
+    }
+    /* Connecting track running behind the step medallions. */
+    .welcome-steps::before {
+      content: "";
+      position: absolute;
+      left: 12%;
+      right: 12%;
+      top: 2.05rem;
+      height: 2px;
+      background: linear-gradient(90deg,
+        rgba(53,217,230,.05),
+        rgba(53,217,230,.45),
+        rgba(141,112,242,.45),
+        rgba(141,112,242,.05));
+      border-radius: 2px;
+      z-index: 0;
+    }
+    .ws-step {
+      position: relative;
+      z-index: 1;
+      flex: 1 1 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: .55rem;
+      padding: .9rem .45rem .8rem;
+      border-radius: 16px;
+      border: 1px solid var(--ks-border);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.012), transparent 40%),
+        linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.02));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 10px 22px rgba(0,0,0,.18);
+      text-align: center;
+      transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+    }
+    .ws-step:hover {
+      transform: translateY(-3px);
+      border-color: rgba(53,217,230,.42);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 16px 30px rgba(53,217,230,.18);
+    }
+    /* Number chip floats on the medallion's top-right. */
+    .ws-badge {
+      position: absolute;
+      top: .65rem;
+      left: calc(50% + .85rem);
+      display: grid;
+      place-items: center;
+      width: 1.25rem;
+      height: 1.25rem;
+      border-radius: 999px;
+      font-size: .7rem;
+      font-weight: 800;
+      color: #04121a;
+      background: linear-gradient(135deg, var(--ks-cyan), var(--ks-purple));
+      box-shadow: 0 4px 10px rgba(53,217,230,.4), 0 0 0 2px var(--ks-bg);
+    }
+    /* Icon medallion: gradient ring + glassy core. */
+    .ws-step .ws-emoji {
+      display: grid;
+      place-items: center;
+      width: 3rem;
+      height: 3rem;
+      font-size: 1.4rem;
+      line-height: 1;
+      border-radius: 999px;
+      background:
+        linear-gradient(180deg, rgba(20,29,49,.95), rgba(11,16,32,.95)) padding-box,
+        linear-gradient(140deg, var(--ks-cyan), var(--ks-purple)) border-box;
+      border: 2px solid transparent;
+      box-shadow: 0 8px 18px rgba(0,0,0,.35), inset 0 1px 1px rgba(255,255,255,.12);
+    }
+    .ws-step .ws-emoji .ico { width: 1.6rem; height: 1.6rem; }
+    .ws-step .ws-emoji .ico99 {
+      font-weight: 800;
+      font-size: .98rem;
+      line-height: 1;
+      letter-spacing: -.05em;
+      background: linear-gradient(135deg, var(--ks-cyan), var(--ks-purple));
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      color: transparent;
+    }
+    .ws-step .ws-label {
+      font-size: .78rem;
+      font-weight: 750;
+      line-height: 1.25;
+      letter-spacing: -.01em;
+    }
+    .ws-arrow { display: none; }
+
+    .welcome-actions {
+      display: flex;
+      gap: .6rem;
+      flex-wrap: wrap;
+      padding: 1.1rem 1.4rem 1.3rem;
+    }
+    .welcome-actions button { margin: 0; }
+    .welcome-actions #welcomeStartBtn { flex: 1 1 auto; }
+
+    .hero-help {
+      position: absolute;
+      top: .85rem;
+      right: .9rem;
+      z-index: 2;
+      margin: 0;
+      width: auto;
+      padding: .3rem .7rem;
+      border-radius: 999px;
+      font-size: .78rem;
+      font-weight: 700;
+      color: var(--ks-text);
+      border: 1px solid var(--ks-border);
+      background: rgba(255,255,255,.06);
+      cursor: pointer;
+      transition: border-color .18s ease, background .18s ease;
+    }
+    .hero-help:hover {
+      border-color: rgba(53,217,230,.5);
+      background: rgba(53,217,230,.12);
+    }
+
+    @media (max-width: 560px) {
+      .welcome-features { grid-template-columns: 1fr; }
+      .welcome-steps { flex-wrap: wrap; justify-content: center; }
+      .welcome-steps::before { display: none; }
+      .ws-step { flex: 1 1 40%; }
+    }
 
     /* Locked sections while no save slot is active (first-run / pending new config). */
     body.config-locked #suggestSection,

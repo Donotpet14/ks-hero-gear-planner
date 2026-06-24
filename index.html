@@ -11,8 +11,61 @@
 </head>
 
 <body>
+<svg class="ks-icon-sprite" aria-hidden="true" focusable="false" width="0" height="0" style="position:absolute">
+  <defs>
+    <linearGradient id="icoGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#35d9e6"/>
+      <stop offset="1" stop-color="#8d70f2"/>
+    </linearGradient>
+  </defs>
+  <symbol id="i-target" viewBox="0 0 24 24" fill="none" stroke="url(#icoGrad)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="8.5"/>
+    <circle cx="12" cy="12" r="4.5"/>
+    <circle cx="12" cy="12" r="1.5" fill="url(#icoGrad)" stroke="none"/>
+  </symbol>
+  <symbol id="i-backpack" viewBox="0 0 24 24" fill="none" stroke="url(#icoGrad)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="4.5" y="7" width="15" height="13.5" rx="3.2"/>
+    <path d="M9 7V5.2a3 3 0 0 1 6 0V7"/>
+    <rect x="8.5" y="12" width="7" height="6" rx="1.4"/>
+    <path d="M12 7v4"/>
+  </symbol>
+  <symbol id="i-wand" viewBox="0 0 24 24" fill="none" stroke="url(#icoGrad)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 20 14 10"/>
+    <path d="M16.5 3.4l.95 2.15 2.15.95-2.15.95-.95 2.15-.95-2.15-2.15-.95 2.15-.95z" fill="url(#icoGrad)" stroke="none"/>
+    <path d="M20 9.6v2.4M18.8 10.8h2.4"/>
+  </symbol>
+  <symbol id="i-share" viewBox="0 0 24 24" fill="none" stroke="url(#icoGrad)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="6.5" cy="12" r="2.4"/>
+    <circle cx="17" cy="6.5" r="2.4"/>
+    <circle cx="17" cy="17.5" r="2.4"/>
+    <path d="M8.7 10.9 14.8 7.6M8.7 13.1 14.8 16.4"/>
+  </symbol>
+  <symbol id="i-helmet" viewBox="0 0 24 24" fill="none" stroke="url(#icoGrad)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 3.4C8.6 3.4 6.2 5.7 6.2 9V13.6C6.2 16.9 8.7 19.9 12 20.7C15.3 19.9 17.8 16.9 17.8 13.6V9C17.8 5.7 15.4 3.4 12 3.4Z"/>
+    <path d="M6.6 9.5H17.4"/>
+    <path d="M9.7 12.6V15.6M12 12.8V16M14.3 12.6V15.6"/>
+  </symbol>
+  <symbol id="i-plus99" viewBox="0 0 36 24">
+    <text x="18" y="18.8" text-anchor="middle" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="20" font-weight="800" letter-spacing="-1.2" fill="url(#icoGrad)">+99</text>
+  </symbol>
+  <symbol id="i-hammergem" viewBox="0 0 24 24" fill="none" stroke="url(#icoGrad)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M5 9.3L8.4 4.6H15.6L19 9.3L12 20.4Z"/>
+    <path d="M5 9.3H19"/>
+    <path d="M8.4 4.6L9.9 9.3L12 20.4L14.1 9.3L15.6 4.6"/>
+    <path d="M9.9 9.3L12 4.6L14.1 9.3"/>
+  </symbol>
+  <symbol id="i-save" viewBox="0 0 24 24" fill="none" stroke="url(#icoGrad)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 3.1V12.7"/>
+    <path d="M8.3 9.0 12 12.9 15.7 9.0"/>
+    <path d="M5 13.7V17.3a1.6 1.6 0 0 0 1.6 1.6H17.4A1.6 1.6 0 0 0 19 17.3V13.7"/>
+  </symbol>
+  <symbol id="i-spark" viewBox="0 0 24 24">
+    <path d="M12 3.2c.6 4.4 1.8 5.6 6.2 6.2-4.4.6-5.6 1.8-6.2 6.2-.6-4.4-1.8-5.6-6.2-6.2 4.4-.6 5.6-1.8 6.2-6.2z" fill="url(#icoGrad)"/>
+  </symbol>
+</svg>
 <main class="container">
   <article class="hero">
+    <button id="helpBtn" class="hero-help" type="button" aria-label="What is this? Show the welcome guide" title="What is this?">ⓘ Guide</button>
     <h1>Kingshot Gear Planner</h1>
     <p>Red gear planning with current → target previews, backpack cost checks, local save slots, and suggestion presets.</p>
   </article>
@@ -154,17 +207,85 @@
   </article>
 </div>
 
-<div id="welcomeModal" class="modal" role="dialog" aria-modal="true">
+<div id="welcomeModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="welcomeHeading">
   <article class="modal-card welcome-card">
-    <h2>Welcome to the Gear Planner</h2>
-    <p>This tool keeps each gear plan in its own <strong>save slot</strong>. Start by setting up your current gear, then plan your upgrades. When you save, you'll give the slot a name.</p>
-    <ul class="welcome-points">
-      <li>🔧 Set your real current gear first.</li>
-      <li>🎯 Plan target upgrades and check material costs.</li>
-      <li>💾 Save it as a named slot and switch between plans anytime.</li>
-    </ul>
-    <footer style="display:flex; gap:.6rem; flex-wrap:wrap; margin-top:1rem">
+    <button id="welcomeCloseBtn" class="welcome-x secondary" type="button" aria-label="Close">✕</button>
+
+    <header class="welcome-hero">
+      <div class="welcome-emblem" aria-hidden="true">
+        <img src="assets/gears/archer_helmet.png" alt="" class="we-icon we-icon-1">
+        <img src="assets/gears/infantry_chest.png" alt="" class="we-icon we-icon-2">
+        <img src="assets/gears/cavalry_boots.png" alt="" class="we-icon we-icon-3">
+        <span class="we-spark"><svg class="ico"><use href="#i-spark"></use></svg></span>
+      </div>
+      <h2 id="welcomeHeading">Plan your Red hero gear, the smart way</h2>
+      <p class="welcome-tagline">See upgrade costs, leftovers, and stat bonuses at a glance — all in your browser, nothing uploaded.</p>
+      <div class="welcome-chips" aria-label="Tracked materials">
+        <span class="mat-chip"><img src="assets/materials/mythic.png" alt="">Mythic Gear</span>
+        <span class="mat-chip"><img src="assets/materials/mithril.png" alt="">Mithril</span>
+        <span class="mat-chip"><img src="assets/materials/exp.png" alt="">Enhance XP</span>
+        <span class="mat-chip"><img src="assets/materials/hammers.png" alt="">Forge Hammers</span>
+      </div>
+    </header>
+
+    <section class="welcome-block">
+      <h3 class="welcome-kicker">What you can do</h3>
+      <div class="welcome-features">
+        <div class="wf-tile">
+          <span class="wf-emoji"><svg class="ico"><use href="#i-target"></use></svg></span>
+          <strong>Plan upgrades</strong>
+          <small>Set current → target for every gear piece across Archer, Infantry &amp; Cavalry.</small>
+        </div>
+        <div class="wf-tile">
+          <span class="wf-emoji"><svg class="ico"><use href="#i-backpack"></use></svg></span>
+          <strong>Backpack checks</strong>
+          <small>Enter your materials and instantly see “Enough” or what's missing.</small>
+        </div>
+        <div class="wf-tile">
+          <span class="wf-emoji"><svg class="ico"><use href="#i-wand"></use></svg></span>
+          <strong>Suggestion presets</strong>
+          <small>Balanced, Attack, Defense, Bear &amp; Castle auto-plans — previewed first.</small>
+        </div>
+        <div class="wf-tile">
+          <span class="wf-emoji"><svg class="ico"><use href="#i-share"></use></svg></span>
+          <strong>Save &amp; share</strong>
+          <small>Named save slots in your browser, plus JSON export/import.</small>
+        </div>
+      </div>
+    </section>
+
+    <section class="welcome-block">
+      <h3 class="welcome-kicker">How it works</h3>
+      <div class="welcome-steps">
+        <div class="ws-step">
+          <span class="ws-badge">1</span>
+          <span class="ws-emoji"><svg class="ico"><use href="#i-helmet"></use></svg></span>
+          <span class="ws-label">Set current gear</span>
+        </div>
+        <span class="ws-arrow" aria-hidden="true">➔</span>
+        <div class="ws-step">
+          <span class="ws-badge">2</span>
+          <span class="ws-emoji"><span class="ico99">+99</span></span>
+          <span class="ws-label">Raise targets</span>
+        </div>
+        <span class="ws-arrow" aria-hidden="true">➔</span>
+        <div class="ws-step">
+          <span class="ws-badge">3</span>
+          <span class="ws-emoji"><svg class="ico"><use href="#i-hammergem"></use></svg></span>
+          <span class="ws-label">Check costs</span>
+        </div>
+        <span class="ws-arrow" aria-hidden="true">➔</span>
+        <div class="ws-step">
+          <span class="ws-badge">4</span>
+          <span class="ws-emoji"><svg class="ico"><use href="#i-save"></use></svg></span>
+          <span class="ws-label">Save your plan</span>
+        </div>
+      </div>
+    </section>
+
+    <footer class="welcome-actions">
       <button id="welcomeStartBtn" type="button">🔧 Start setup</button>
+      <button id="welcomeLaterBtn" class="secondary" type="button">Maybe later</button>
     </footer>
   </article>
 </div>

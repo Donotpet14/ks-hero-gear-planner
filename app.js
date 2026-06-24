@@ -1045,6 +1045,17 @@ function beginSetup(){
 const welcomeStartBtn=document.getElementById('welcomeStartBtn');
 if(welcomeStartBtn) welcomeStartBtn.addEventListener('click', beginSetup);
 
+/* ---- Welcome splash: open from Help, close without starting setup ---- */
+function openWelcome(){ document.getElementById('welcomeModal').classList.add('show'); }
+function closeWelcome(){ document.getElementById('welcomeModal').classList.remove('show'); }
+const helpBtn=document.getElementById('helpBtn');
+if(helpBtn) helpBtn.addEventListener('click', openWelcome);
+const welcomeLaterBtn=document.getElementById('welcomeLaterBtn');
+if(welcomeLaterBtn) welcomeLaterBtn.addEventListener('click', closeWelcome);
+const welcomeCloseBtn=document.getElementById('welcomeCloseBtn');
+if(welcomeCloseBtn) welcomeCloseBtn.addEventListener('click', closeWelcome);
+document.getElementById('welcomeModal').addEventListener('click', e=>{ if(e.target.id==='welcomeModal') closeWelcome(); });
+
 let nameModalResolve=null;
 function promptConfigName(initial, onConfirm){
   const input=document.getElementById('nameModalInput');
@@ -1081,6 +1092,7 @@ document.getElementById('switchCancelBtn').addEventListener('click', ()=>resolve
 document.getElementById('switchModal').addEventListener('click', e=>{ if(e.target.id==='switchModal') resolveSwitch('onCancel'); });
 document.addEventListener('keydown', e=>{
   if(e.key!=='Escape') return;
+  if(document.getElementById('welcomeModal').classList.contains('show')){ closeWelcome(); return; }
   if(document.getElementById('nameModal').classList.contains('show')){ closeNameModal(); return; }
   if(document.getElementById('switchModal').classList.contains('show')){ resolveSwitch('onCancel'); return; }
 });
