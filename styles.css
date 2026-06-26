@@ -1098,8 +1098,11 @@
     /* ---- Welcome splash screen ---- */
     .welcome-card {
       width: min(700px, 100%);
+      max-height: 90vh;
       padding: 0;
       position: relative;
+      display: flex;
+      flex-direction: column;
       overflow: hidden;
       border: 1px solid var(--ks-border);
       animation: welcomeIn .42s cubic-bezier(.22, 1, .36, 1);
@@ -1127,6 +1130,7 @@
 
     .welcome-hero {
       position: relative;
+      flex: none;
       padding: 1.7rem 1.4rem 1.3rem;
       text-align: center;
       background:
@@ -1187,6 +1191,13 @@
       margin-top: .95rem;
     }
     .welcome-chips .mat-chip { font-size: .8rem; font-weight: 700; cursor: default; }
+
+    .welcome-body {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+    }
 
     .welcome-block { padding: 1.1rem 1.4rem 0; }
     .welcome-block:last-of-type { padding-bottom: .3rem; }
@@ -1325,7 +1336,9 @@
       display: flex;
       gap: .6rem;
       flex-wrap: wrap;
+      flex: none;
       padding: 1.1rem 1.4rem 1.3rem;
+      border-top: 1px solid var(--ks-border);
     }
     .welcome-actions button { margin: 0; }
     .welcome-actions #welcomeStartBtn { flex: 1 1 auto; }

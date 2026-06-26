@@ -1031,10 +1031,10 @@ function startFirstRunSetup(){
   renderSlotOptions();
   updateConfigHeader();
   updateLockState();
-  document.getElementById('welcomeModal').classList.add('show');
+  openWelcome();
 }
 function beginSetup(){
-  document.getElementById('welcomeModal').classList.remove('show');
+  closeWelcome();
   pendingNewConfig=true;
   prevActiveConfigId=null;
   savedSnapshot=null;
@@ -1046,8 +1046,8 @@ const welcomeStartBtn=document.getElementById('welcomeStartBtn');
 if(welcomeStartBtn) welcomeStartBtn.addEventListener('click', beginSetup);
 
 /* ---- Welcome splash: open from Help, close without starting setup ---- */
-function openWelcome(){ document.getElementById('welcomeModal').classList.add('show'); }
-function closeWelcome(){ document.getElementById('welcomeModal').classList.remove('show'); }
+function openWelcome(){ document.getElementById('welcomeModal').classList.add('show'); document.documentElement.classList.add('bp-scroll-lock'); document.body.classList.add('bp-scroll-lock'); }
+function closeWelcome(){ document.getElementById('welcomeModal').classList.remove('show'); document.documentElement.classList.remove('bp-scroll-lock'); document.body.classList.remove('bp-scroll-lock'); }
 const helpBtn=document.getElementById('helpBtn');
 if(helpBtn) helpBtn.addEventListener('click', openWelcome);
 const welcomeLaterBtn=document.getElementById('welcomeLaterBtn');
@@ -1317,7 +1317,7 @@ function overviewHtmlForGear(gear){
     localStorage.removeItem('ksGearPlanner.activeConfig');
     renderSlotOptions();
     render();
-    document.getElementById('welcomeModal').classList.add('show');
+    openWelcome();
   }
 })();
 initBackpackDrawer();
