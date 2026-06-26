@@ -71,6 +71,75 @@
     .hero h1 { margin-bottom: .35rem; letter-spacing: -.04em; }
     .hero p { margin: 0; color: var(--ks-muted); max-width: 720px; }
 
+    /* Mode badge — names the active mode and echoes the gear box colors:
+       cyan for planning (target boxes), amber for current-gear setup.
+       Lives in the sticky backpack header so it stays visible while scrolling. */
+    .backpack-head-title {
+      display: flex;
+      align-items: center;
+      gap: .55rem .7rem;
+      flex-wrap: wrap;
+      min-width: 0;
+    }
+    .mode-badge {
+      position: relative;
+      z-index: 1;
+      display: inline-flex;
+      align-items: center;
+      gap: .5rem;
+      padding: .35rem .75rem .35rem .6rem;
+      border-radius: 999px;
+      font-size: .8rem;
+      font-weight: 800;
+      letter-spacing: .01em;
+      white-space: nowrap;
+      border: 1px solid rgba(53,217,230,.45);
+      background: linear-gradient(180deg, rgba(53,217,230,.16), rgba(53,217,230,.06));
+      color: #d7fbff;
+      transition: border-color .25s ease, background .25s ease, color .25s ease;
+    }
+    .mode-badge-dot {
+      width: .6rem;
+      height: .6rem;
+      border-radius: 999px;
+      background: var(--ks-cyan);
+      box-shadow: 0 0 0 0 rgba(53,217,230,.55);
+      animation: modeBadgePulse 2.2s ease-out infinite;
+    }
+    @keyframes modeBadgePulse {
+      0%   { box-shadow: 0 0 0 0 rgba(53,217,230,.5); }
+      70%  { box-shadow: 0 0 0 .5rem rgba(53,217,230,0); }
+      100% { box-shadow: 0 0 0 0 rgba(53,217,230,0); }
+    }
+    body.editing-current .mode-badge {
+      border-color: rgba(238,178,86,.55);
+      background: linear-gradient(180deg, rgba(238,178,86,.2), rgba(238,178,86,.07));
+      color: #ffe6bd;
+    }
+    body.editing-current .mode-badge-dot {
+      background: #eeb256;
+      animation-name: modeBadgePulseAmber;
+    }
+    @keyframes modeBadgePulseAmber {
+      0%   { box-shadow: 0 0 0 0 rgba(238,178,86,.5); }
+      70%  { box-shadow: 0 0 0 .5rem rgba(238,178,86,0); }
+      100% { box-shadow: 0 0 0 0 rgba(238,178,86,0); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .mode-badge-dot { animation: none; }
+    }
+
+    /* In current-gear setup, the backpack status pills and material list don't
+       apply (you're recording owned gear, not planning), so hide them to keep
+       the sticky header focused on the active mode. The Suggest upgrades and
+       Save slots sections are planning tools too, so hide them as well. */
+    body.editing-current .backpack-head-actions,
+    body.editing-current #resourceStrip,
+    body.editing-current #suggestSection,
+    body.editing-current #slotSection {
+      display: none;
+    }
+
     .site-footer {
       max-width: 1180px;
       margin: 2rem auto 0;

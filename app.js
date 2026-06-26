@@ -362,6 +362,8 @@ function updateEditCurrentBtn(){
   btn.textContent = editCurrentMode ? '✏️ Editing current gear' : '🔒 Edit Current Gear';
   btn.classList.toggle('active', editCurrentMode);
   document.body.classList.toggle('editing-current', editCurrentMode);
+  const modeText = document.querySelector('#modeBadge .mode-badge-text');
+  if(modeText) modeText.textContent = editCurrentMode ? '🔧 Current gear setup' : '🎯 Planning mode';
   // Offer Cancel in the floating bar only when there's a slot to return to
   // (i.e. not the very first profile being set up).
   const cancelBtn=document.getElementById('cancelCurrentBtn');
@@ -571,10 +573,15 @@ function onStepClick(e){
   if(field === 'targetExp' && next < g.currentExp) next = g.currentExp;
   if(field === 'targetForge' && next < g.currentForge) next = g.currentForge;
 
+  const prevVal = g[field];
   g[field] = next;
 
-  if(field === 'currentExp' && g.targetExp < g.currentExp) g.targetExp = g.currentExp;
-  if(field === 'currentForge' && g.targetForge < g.currentForge) g.targetForge = g.currentForge;
+  // Keep target in sync with current. While setting up current gear, the
+  // target should track current — so lowering current doesn't leave a phantom
+  // planned upgrade — while still clamping target up when current rises above
+  // it. A genuinely planned higher target (target !== prevVal) is preserved.
+  if(field === 'currentExp' && (g.targetExp === prevVal || g.targetExp < next)) g.targetExp = next;
+  if(field === 'currentForge' && (g.targetForge === prevVal || g.targetForge < next)) g.targetForge = next;
 
   render();
 }
