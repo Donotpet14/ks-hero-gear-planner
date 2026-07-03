@@ -1401,6 +1401,18 @@
     }
     .ws-arrow { display: none; }
 
+    .bp-tutorial-tip {
+      margin: 1rem 0 0;
+      padding: .7rem .85rem;
+      border-radius: .6rem;
+      border: 1px solid var(--ks-border);
+      background: rgba(255, 255, 255, .04);
+      color: var(--ks-muted);
+      font-size: .85rem;
+      line-height: 1.45;
+    }
+    .bp-tutorial-tip strong { color: #d7fbff; }
+
     .welcome-actions {
       display: flex;
       gap: .6rem;

@@ -296,6 +296,60 @@
   </article>
 </div>
 
+<div id="backpackTutorialModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="bpTutorialHeading">
+  <article class="modal-card welcome-card">
+    <button id="bpTutorialCloseBtn" class="welcome-x secondary" type="button" aria-label="Close">✕</button>
+
+    <header class="welcome-hero">
+      <div class="welcome-emblem" aria-hidden="true">
+        <img src="assets/materials/mythic.png" alt="" class="we-icon we-icon-1">
+        <img src="assets/materials/mithril.png" alt="" class="we-icon we-icon-2">
+        <img src="assets/materials/hammers.png" alt="" class="we-icon we-icon-3">
+        <span class="we-spark"><svg class="ico"><use href="#i-backpack"></use></svg></span>
+      </div>
+      <h2 id="bpTutorialHeading">Current gear saved! Now stock your backpack</h2>
+      <p class="welcome-tagline">Tell the planner what materials you own and it instantly shows whether you have <strong>enough</strong> for your upgrades — or exactly what's missing.</p>
+      <div class="welcome-chips" aria-label="Tracked materials">
+        <span class="mat-chip"><img src="assets/materials/mythic.png" alt="">Mythic Gear</span>
+        <span class="mat-chip"><img src="assets/materials/mithril.png" alt="">Mithril</span>
+        <span class="mat-chip"><img src="assets/materials/exp.png" alt="">Enhance XP</span>
+        <span class="mat-chip"><img src="assets/materials/hammers.png" alt="">Forge Hammers</span>
+      </div>
+    </header>
+
+    <div class="welcome-body">
+    <section class="welcome-block">
+      <h3 class="welcome-kicker">How to fill it in</h3>
+      <div class="welcome-steps">
+        <div class="ws-step">
+          <span class="ws-badge">1</span>
+          <span class="ws-emoji">✏️</span>
+          <span class="ws-label">Tap “Edit materials”</span>
+        </div>
+        <span class="ws-arrow" aria-hidden="true">➔</span>
+        <div class="ws-step">
+          <span class="ws-badge">2</span>
+          <span class="ws-emoji"><svg class="ico"><use href="#i-backpack"></use></svg></span>
+          <span class="ws-label">Enter what you own</span>
+        </div>
+        <span class="ws-arrow" aria-hidden="true">➔</span>
+        <div class="ws-step">
+          <span class="ws-badge">3</span>
+          <span class="ws-emoji">✅</span>
+          <span class="ws-label">See “Enough” live</span>
+        </div>
+      </div>
+      <p class="bp-tutorial-tip"><strong>Tip:</strong> leave a material at <strong>0</strong> to treat it as unlimited — handy when you only want to track one or two resources.</p>
+    </section>
+    </div>
+
+    <footer class="welcome-actions">
+      <button id="bpTutorialOpenBackpackBtn" type="button">🎒 Open backpack</button>
+      <button id="bpTutorialDismissBtn" class="secondary" type="button">I'll do it later</button>
+    </footer>
+  </article>
+</div>
+
 <div id="nameModal" class="modal" role="dialog" aria-modal="true">
   <article class="modal-card name-card">
     <div class="section-head">

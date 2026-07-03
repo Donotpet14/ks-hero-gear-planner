@@ -885,7 +885,7 @@ function renderOverview(){
 }
 
 document.getElementById('editCurrentBtn').addEventListener('click', onEditCurrentToggle);
-document.getElementById('saveCurrentBtn').addEventListener('click', ()=>{ saveCurrentConfig(()=>setEditCurrent(false)); });
+document.getElementById('saveCurrentBtn').addEventListener('click', ()=>{ const isNewConfig=pendingNewConfig; saveCurrentConfig(()=>{ setEditCurrent(false); maybeShowBackpackTutorial(isNewConfig); }); });
 // Cancel current-gear editing: reload the active slot (discarding edits) or, for a
 // brand-new config started from an existing slot, fall back to that slot.
 function cancelEditCurrent(){
@@ -1063,6 +1063,24 @@ const welcomeCloseBtn=document.getElementById('welcomeCloseBtn');
 if(welcomeCloseBtn) welcomeCloseBtn.addEventListener('click', closeWelcome);
 document.getElementById('welcomeModal').addEventListener('click', e=>{ if(e.target.id==='welcomeModal') closeWelcome(); });
 
+/* ---- Step 2 onboarding: teach the backpack after first current-gear save ---- */
+const BACKPACK_TUTORIAL_KEY='ksGearPlanner.backpackTutorialSeen';
+function openBackpackTutorial(){ document.getElementById('backpackTutorialModal').classList.add('show'); document.documentElement.classList.add('bp-scroll-lock'); document.body.classList.add('bp-scroll-lock'); }
+function closeBackpackTutorial(){ document.getElementById('backpackTutorialModal').classList.remove('show'); document.documentElement.classList.remove('bp-scroll-lock'); document.body.classList.remove('bp-scroll-lock'); }
+function maybeShowBackpackTutorial(force){
+  // Always coach when setting up a brand-new configuration; otherwise show once ever.
+  if(!force && localStorage.getItem(BACKPACK_TUTORIAL_KEY)) return;
+  localStorage.setItem(BACKPACK_TUTORIAL_KEY,'1');
+  openBackpackTutorial();
+}
+const bpTutorialCloseBtn=document.getElementById('bpTutorialCloseBtn');
+if(bpTutorialCloseBtn) bpTutorialCloseBtn.addEventListener('click', closeBackpackTutorial);
+const bpTutorialDismissBtn=document.getElementById('bpTutorialDismissBtn');
+if(bpTutorialDismissBtn) bpTutorialDismissBtn.addEventListener('click', closeBackpackTutorial);
+const bpTutorialOpenBackpackBtn=document.getElementById('bpTutorialOpenBackpackBtn');
+if(bpTutorialOpenBackpackBtn) bpTutorialOpenBackpackBtn.addEventListener('click', ()=>{ closeBackpackTutorial(); setBackpackOpen(true); });
+document.getElementById('backpackTutorialModal').addEventListener('click', e=>{ if(e.target.id==='backpackTutorialModal') closeBackpackTutorial(); });
+
 let nameModalResolve=null;
 function promptConfigName(initial, onConfirm){
   const input=document.getElementById('nameModalInput');
@@ -1100,6 +1118,7 @@ document.getElementById('switchModal').addEventListener('click', e=>{ if(e.targe
 document.addEventListener('keydown', e=>{
   if(e.key!=='Escape') return;
   if(document.getElementById('welcomeModal').classList.contains('show')){ closeWelcome(); return; }
+  if(document.getElementById('backpackTutorialModal').classList.contains('show')){ closeBackpackTutorial(); return; }
   if(document.getElementById('nameModal').classList.contains('show')){ closeNameModal(); return; }
   if(document.getElementById('switchModal').classList.contains('show')){ resolveSwitch('onCancel'); return; }
 });
