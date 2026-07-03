@@ -456,8 +456,28 @@
       background-repeat: no-repeat, no-repeat;
       background-position: center, right .8rem center;
       background-size: auto, 14px;
+      /* Do NOT transition `background` on selects: the chevron lives in the
+         background layer, so animating it makes the arrow slide in from the
+         left and resize on every state change. */
+      transition: border-color .18s ease, box-shadow .2s ease;
     }
     select:focus {
+      background-image:
+        linear-gradient(180deg, rgba(53,217,230,.1), rgba(53,217,230,.04)),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2335d9e6' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+      background-repeat: no-repeat, no-repeat;
+      background-position: center, right .8rem center;
+      background-size: auto, 14px;
+    }
+    select:hover {
+      background-image:
+        linear-gradient(180deg, rgba(255,255,255,.1), rgba(255,255,255,.045)),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%239dadc8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+      background-repeat: no-repeat, no-repeat;
+      background-position: center, right .8rem center;
+      background-size: auto, 14px;
+    }
+    select:focus:hover {
       background-image:
         linear-gradient(180deg, rgba(53,217,230,.1), rgba(53,217,230,.04)),
         url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2335d9e6' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
