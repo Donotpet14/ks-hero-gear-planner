@@ -694,8 +694,11 @@ function unfloatSection(){
 }
 
 // Drawer height that makes the sheet fill the screen down to the bottom gap.
+// Uses the visual viewport height when available so the on-screen keyboard
+// (which shrinks the visual viewport, not window.innerHeight) is accounted for.
 function computeOpenHeight(){
-  return Math.max(0, window.innerHeight - BP_BOTTOM_GAP - bpFloatTop - bpBaseHeight);
+  const vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+  return Math.max(0, vh - BP_BOTTOM_GAP - bpFloatTop - bpBaseHeight);
 }
 
 function syncDrawerHeight(){
@@ -839,12 +842,7 @@ function initBackpackDrawer(){
   window.addEventListener('scroll', onScroll, {passive:true});
   onScroll();
 
-  window.addEventListener('resize', ()=>{
-    if(isDesktop()){
-      if(bpFloating) unfloatSection();
-      updateBackpackBtn();
-      return;
-    }
+  function reanchorFloating(){
     if(bpFloating && bpSpacer){
       const r = bpSpacer.getBoundingClientRect();
       bpFloatTop = r.top; bpFloatLeft = r.left; bpFloatWidth = r.width;
@@ -853,8 +851,43 @@ function initBackpackDrawer(){
       section.style.width = bpFloatWidth + 'px';
       setStuck(bpFloatTop <= 0.5);
     }
+  }
+
+  function handleViewportChange(){
+    if(isDesktop()){
+      if(bpFloating) unfloatSection();
+      updateBackpackBtn();
+      return;
+    }
+    reanchorFloating();
     syncDrawerHeight();
+  }
+
+  window.addEventListener('resize', handleViewportChange);
+
+  // The on-screen keyboard resizes the *visual* viewport without firing a
+  // window 'resize' on iOS Safari, so track it directly. This keeps the
+  // floating sheet sized to the space above the keyboard while typing and
+  // re-anchored to its original position once the keyboard is dismissed.
+  const vv = window.visualViewport;
+  if(vv){
+    vv.addEventListener('resize', handleViewportChange);
+    vv.addEventListener('scroll', reanchorFloating);
+  }
+
+  // Keep the focused material input visible above the keyboard.
+  function scrollFocusedIntoView(){
+    if(isDesktop() || !bpFloating) return;
+    const active = document.activeElement;
+    if(active && drawer.contains(active) && typeof active.scrollIntoView === 'function'){
+      active.scrollIntoView({block:'center', behavior:'smooth'});
+    }
+  }
+  drawer.addEventListener('focusin', ()=>{
+    // Wait for the keyboard to animate in and the viewport to settle.
+    setTimeout(scrollFocusedIntoView, 300);
   });
+  if(vv) vv.addEventListener('resize', ()=> setTimeout(scrollFocusedIntoView, 60));
 
   syncDrawerHeight();
 }
